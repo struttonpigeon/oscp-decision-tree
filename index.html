@@ -1584,7 +1584,7 @@ function render(){
   b.innerHTML=mkBC();
   let h="";
   if(cur==="root"){
-    h+=`<div class="ms open" style="margin-bottom:1.5rem">
+    h+=`<div class="ms" style="margin-bottom:1.5rem">
       <div class="mh" onclick="tog(this)"><span class="sn">00</span><h3>Step 0 &mdash; Download the OSCP Toolkit</h3><span class="tg">&#9660;</span></div>
       <div class="mb">
         <p>Before you start, clone the <strong>OSCPToolkit</strong> to your Kali machine. It contains all the scripts, binaries, and wordlists referenced throughout this decision tree.</p>
@@ -1646,7 +1646,6 @@ function renderM(a,b){
   for(const s of m.sections)
     h+=`<div class="ms"><div class="mh" onclick="tog(this)"><span class="sn">${s.step}</span><h3>${s.title}</h3><span class="tg">&#9660;</span></div><div class="mb">${s.body}</div></div>`;
   h+="</div>";a.innerHTML=h;
-  const f=a.querySelector(".ms");if(f)f.classList.add("open");
   a.querySelectorAll(".cb").forEach(bl=>{
     const btn=document.createElement("button");btn.className="cp";btn.textContent="copy";
     btn.onclick=function(e){e.stopPropagation();
