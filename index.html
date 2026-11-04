@@ -1171,19 +1171,25 @@ net localgroup Administrators
 net users</div>
 <div class="tb"><strong>Exam Tip:</strong> MS01 privesc is often in OSCP tips and tricks. Check service hijack, stored creds, PowerShell history. RDP may be necessary for some privesc paths.</div>`},
 
-{step:"03",title:"Run "+T.bh+" CE Immediately",body:`<div class="wb"><strong>Do this NOW.</strong> As soon as your domain creds work, run ${T.bh} collection before touching anything else on the AD set. It maps the entire domain and shows you the attack path.</div>
-<h4>Start ${T.bh} CE on Kali</h4>
-<div class="cb"><span class="ct">cd ~/bloodhound-ce && docker compose up -d</span>
-<span class="cm"># Access: http://localhost:8080</span></div>
-<h4>Collect Domain Data</h4>
-<div class="cb"><span class="ct">bloodhound-ce-python</span> --zip -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP
-<span class="cm"># Upload the resulting .zip to ${T.bh} CE web UI</span></div>
-<h4>${T.shh} Collection (From Windows Foothold)</h4>
-<div class="cb"><span class="cm"># Use when you can't reach DC from Kali yet (before pivot setup):</span>
+{step:"03",title:"Run "+T.bh+" Immediately",body:`<div class="wb"><strong>Do this NOW.</strong> As soon as your domain creds work, run ${T.shh} collection before touching anything else on the AD set. It maps the entire domain and shows you the attack path.</div>
+<h4>Start ${T.bh} on Kali</h4>
+<div class="cb"><span class="ct">sudo neo4j start</span>
+<span class="cm"># Wait ~10s for neo4j to finish starting</span>
+<span class="ct">bloodhound</span> &amp;
+<span class="cm"># Login: neo4j / neo4j (change on first run)</span></div>
+<h4>Collect Domain Data with ${T.shh}</h4>
+<div class="cb"><span class="cm"># From Windows foothold (primary method):</span>
 Import-Module .\\${T.shh}.ps1
 Invoke-${T.bh} -CollectionMethod All -OutputDirectory C:\\temp\\ -OutputPrefix "enum"
-<span class="cm"># Download the .zip and upload to ${T.bh} CE</span></div>
-<div class="tb"><strong>AV Note:</strong> If ${T.shh}.ps1 is blocked by AV, try ${T.shh}.exe instead, or run from C:\\Windows\\Temp. As a last resort, use bloodhound-ce-python from Kali through the pivot.</div>
+<span class="cm"># Download the .zip to Kali, drag &amp; drop into ${T.bh} GUI</span>
+
+<span class="cm"># Alternative: ${T.shh}.exe (if .ps1 blocked)</span>
+.\\${T.shh}.exe -c All -o C:\\temp\\
+
+<span class="cm"># Alternative: bloodhound-python from Kali (through pivot):</span>
+<span class="ct">bloodhound-python</span> -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP
+<span class="cm"># Upload the .json files to ${T.bh} GUI</span></div>
+<div class="tb"><strong>AV Note:</strong> If ${T.shh}.ps1 is blocked by AV, try ${T.shh}.exe instead, or run from C:\\Windows\\Temp. As a last resort, use bloodhound-python from Kali through the pivot.</div>
 <h4>Mark Owned &amp; Find the Path</h4>
 <ul>
 <li>Mark your foothold user as <strong>Owned</strong></li>
@@ -1335,14 +1341,15 @@ agent.exe -connect &lt;MS01_INTERNAL_IP&gt;:11602 -ignore-cert
 <span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS"</div>
 <div class="wb"><strong>ALWAYS:</strong> After Ligolo setup, amend /etc/hosts with internal IPs. Routing + hosts = required.</div>`},
 
-{step:"03",title:T.bh+" CE & Domain Enumeration",body:`<h4>${T.bh} CE Docker Setup</h4>
-<div class="cb"><span class="cm"># Install (one-time):</span>
-curl -L https://ghst.ly/getbhce | docker compose -f - up
-<span class="cm"># Start if already installed:</span>
-cd ~/bloodhound-ce && docker compose up -d
-<span class="cm"># Access: http://localhost:8080</span></div>
-<h4>Collect Data (from Kali through pivot)</h4>
-<div class="cb"><span class="ct">bloodhound-ce-python</span> --zip -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP</div>
+{step:"03",title:T.bh+" & Domain Enumeration",body:`<h4>Start ${T.bh} on Kali</h4>
+<div class="cb"><span class="ct">sudo neo4j start</span> && <span class="ct">bloodhound</span> &amp;</div>
+<h4>Re-collect Data (through pivot)</h4>
+<div class="cb"><span class="cm"># From Kali through Ligolo pivot:</span>
+<span class="ct">bloodhound-python</span> -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP
+<span class="cm"># Upload .json files to ${T.bh} GUI</span>
+
+<span class="cm"># Or re-run ${T.shh} from MS01 with new creds/access:</span>
+Invoke-${T.bh} -CollectionMethod All -OutputDirectory C:\\temp\\ -OutputPrefix "post-privesc"</div>
 <h4>What to Check in ${T.bh}</h4>
 <ul>
 <li>Mark owned users/computers</li>
@@ -1605,23 +1612,30 @@ cd ~/oscp-toolkit && ls</div>
           <li>Penelope reverse shell handler (OSCP safe mode)</li>
         </ul>
         <div class="tb"><strong>Tip:</strong> Host the toolkit folder with <code>python3 -m http.server 8000</code> from Kali so you can quickly transfer files to targets during the exam.</div>
-        <h4>${T.bh} CE Setup (Do This Before the Exam)</h4>
-        <p>${T.bh} CE runs in Docker. Install and verify it works <strong>before</strong> exam day so you're not debugging Docker mid-exam.</p>
-        <div class="cb"><span class="cm"># Install ${T.bh} CE (one-time)</span>
-curl -L https://ghst.ly/getbhce | docker compose -f - up
-<span class="cm"># Note the initial admin password from docker logs</span>
+        <h4>${T.bh} Setup (Do This Before the Exam)</h4>
+        <p>${T.bh} uses neo4j + the ${T.bh} GUI. Verify both work <strong>before</strong> exam day.</p>
+        <div class="cb"><span class="cm"># Install neo4j + ${T.bh} (Kali):</span>
+sudo apt install -y neo4j bloodhound
 
-<span class="cm"># After install, stop it:</span>
-cd ~/bloodhound-ce && docker compose down
+<span class="cm"># First run &mdash; set neo4j password:</span>
+<span class="ct">sudo neo4j start</span>
+<span class="cm"># Browse to http://localhost:7474, login neo4j/neo4j, set new password</span>
 
-<span class="cm"># On exam day, start it:</span>
-cd ~/bloodhound-ce && docker compose up -d
-<span class="cm"># Access: http://localhost:8080  (admin / your-password)</span></div>
+<span class="cm"># Start ${T.bh}:</span>
+<span class="ct">bloodhound</span> &amp;
+<span class="cm"># Login with neo4j creds</span>
+
+<span class="cm"># Install bloodhound-python (Kali-side collector):</span>
+pip install bloodhound</div>
         <h4>Collecting ${T.bh} Data</h4>
-        <div class="cb"><span class="cm"># From Kali with domain creds (through Ligolo pivot if needed):</span>
-<span class="ct">bloodhound-ce-python</span> --zip -c All -d &lt;DOMAIN&gt; -u &lt;USER&gt; -p '&lt;PASS&gt;' -dc &lt;DC_HOSTNAME&gt; -ns &lt;DC_IP&gt;
+        <div class="cb"><span class="cm"># Primary: run ${T.shh} from Windows foothold:</span>
+Import-Module .\\${T.shh}.ps1
+Invoke-${T.bh} -CollectionMethod All -OutputDirectory C:\\temp\\ -OutputPrefix "enum"
+<span class="cm"># Download .zip to Kali, drag &amp; drop into ${T.bh} GUI</span>
 
-<span class="cm"># Upload the .zip to ${T.bh} CE web UI</span></div>
+<span class="cm"># Alternative: bloodhound-python from Kali (through pivot):</span>
+<span class="ct">bloodhound-python</span> -c All -d &lt;DOMAIN&gt; -u &lt;USER&gt; -p '&lt;PASS&gt;' -dc &lt;DC_HOSTNAME&gt; -ns &lt;DC_IP&gt;
+<span class="cm"># Upload .json files to ${T.bh} GUI</span></div>
         <h4>What to Check in ${T.bh}</h4>
         <ul>
           <li>Mark your owned users and computers as "Owned"</li>
