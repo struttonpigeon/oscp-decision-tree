@@ -1,6 +1,7 @@
 # OSCP Decision Tree
 
 An interactive, single-file decision tree for the OSCP exam. Click through decisions based on your current scenario (AD vs Standalone, OS, access level) to reach step-by-step methodology with copy-paste commands.
+The idea is you have a guide during your exam when you are fatigued and suffering
 
 ## Usage
 
