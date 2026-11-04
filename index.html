@@ -138,6 +138,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font-body);
 .pl{font-family:var(--font-mono);font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:.75rem}
 #app{transition:opacity .15s ease}
 .fo{opacity:0}
+.port-search{width:100%;padding:.5rem .75rem;font-family:var(--font-mono);font-size:.78rem;background:var(--bg-code);color:var(--fg);border:1px solid color-mix(in srgb,var(--fg-dim) 25%,transparent);border-radius:var(--radius);margin-bottom:.5rem;outline:none;transition:border-color .15s}
+.port-search:focus{border-color:var(--accent)}
+.port-search::placeholder{color:var(--fg-dim)}
+tr.port-hit td{background:var(--accent-glow);color:var(--fg-bright)}
+tr.port-dim{opacity:.25}
+.ht-link{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--font-mono);font-size:.72rem;color:var(--accent);text-decoration:none;padding:.25rem .6rem;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:4px;margin-bottom:.5rem;transition:background .15s,border-color .15s}
+.ht-link:hover{background:var(--accent-glow);border-color:var(--accent)}
 @media(max-width:600px){
   .dc{padding:1rem;gap:.75rem}
   .dc .ic{width:2rem;height:2rem;font-size:1.1rem}
@@ -259,7 +266,9 @@ cd ~/oscp/$IP</div>
 <li>Googled exact service version + "exploit"?</li>
 </ul>`},
 
-{step:"03",title:"Port-to-Action Routing Table",body:`<table>
+{step:"03",title:"Port-to-Action Routing Table",body:`<input type="text" class="port-search" placeholder="Type a port number to filter (e.g. 445, 3389)" oninput="portFilter(this.value)" autocomplete="off">
+<a href="https://hacktricks.wiki/en/index.html" target="_blank" class="ht-link">&#128279; HackTricks &mdash; scroll left sidebar to &ldquo;Network Services Pentesting&rdquo;</a>
+<table id="port-tbl">
 <tr><th>Port</th><th>Action</th></tr>
 <tr><td>21 FTP</td><td>Anonymous login, mirror files, grep secrets, test writable upload to web</td></tr>
 <tr><td>22 SSH</td><td>Not first exploit. Use only found creds or keys</td></tr>
@@ -442,7 +451,7 @@ EXEC xp_cmdshell 'whoami';</div>
 <span class="ct">nxc winrm</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;'
 <span class="ct">nxc rdp</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;'
 <span class="ct">evil-winrm</span> <span class="cf">-i</span> $IP <span class="cf">-u</span> &lt;user&gt; <span class="cf">-p</span> '&lt;pass&gt;'
-<span class="ct">xfreerdp</span> /u:&lt;user&gt; /p:'&lt;pass&gt;' /v:$IP /cert:ignore /dynamic-resolution</div>`}
+<span class="ct">xfreerdp</span> /u:&lt;user&gt; /p:'&lt;pass&gt;' /v:$IP /cert:ignore /dynamic-resolution +clipboard</div>`}
 ]},
 
 win_lowpriv:{title:"Windows \u2014 Privilege Escalation",sections:[
@@ -1123,19 +1132,14 @@ mkdir -p ~/oscp-ad/{scans,loot,tools,proofs}</div>
 echo "$MS01  ms01.$DOM ms01" | sudo tee -a /etc/hosts
 echo "$MS02  ms02.$DOM ms02" | sudo tee -a /etc/hosts</div>
 <h4>Time Sync (Kerberos requires &lt;5min offset)</h4>
-<div class="cb"><span class="ct">sudo ntpdate</span> $DC_IP</div>`},
+<div class="cb"><span class="ct">sudo ntpdate</span> $MS01
+<span class="cm"># Sync against MS01 (reachable now); re-sync against DC after pivot</span></div>`},
 
 {step:"02",title:"Test Foothold Credentials & Get Shell",body:`<div class="cb"><span class="cm"># Test creds against all services on MS01</span>
 <span class="ct">nxc smb</span> $MS01 -u $USER -p "$PASS"
 <span class="ct">nxc winrm</span> $MS01 -u $USER -p "$PASS"
 <span class="ct">nxc rdp</span> $MS01 -u $USER -p "$PASS"
-
-<span class="cm"># Also test against DC directly (sometimes foothold user has DC access!)</span>
-<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS"
-<span class="ct">nxc winrm</span> $DC_IP -u $USER -p "$PASS"
-
-<span class="cm"># Check password policy BEFORE any spraying (avoid lockouts)</span>
-<span class="ct">nxc smb</span> $DC_IP -u $USER -p "$PASS" --pass-pol
+<span class="ct">nxc mssql</span> $MS01 -u $USER -p "$PASS"
 
 <span class="cm"># Verify domain auth</span>
 dir \\\\$DOM\\SYSVOL\\
@@ -1145,7 +1149,7 @@ dir \\\\$DOM\\SYSVOL\\
 <span class="ct">evil-winrm</span> -i $MS01 -u $USER -p "$PASS"
 
 <span class="cm"># RDP (may be needed for GUI privesc)</span>
-<span class="ct">xfreerdp</span> /u:$USER /p:"$PASS" /d:$DOM /v:$MS01 /dynamic-resolution /cert:ignore
+<span class="ct">xfreerdp</span> /u:$USER /p:"$PASS" /d:$DOM /v:$MS01 /dynamic-resolution /cert:ignore +clipboard
 
 <span class="cm"># PsExec (needs local admin)</span>
 <span class="ct">impacket-psexec</span> $DOM/$USER:"$PASS"@$MS01
@@ -1670,6 +1674,7 @@ function nav(id){const a=document.getElementById("app");a.classList.add("fo");se
 function goBack(){if(!hist.length)return;const a=document.getElementById("app");a.classList.add("fo");setTimeout(()=>{cur=hist.pop();render();a.classList.remove("fo");},120);}
 function jumpTo(i){const a=document.getElementById("app");a.classList.add("fo");setTimeout(()=>{cur=hist[i];hist=hist.slice(0,i);render();a.classList.remove("fo");},120);}
 function tog(h){h.parentElement.classList.toggle("open");}
+function portFilter(v){const t=document.getElementById("port-tbl");if(!t)return;const rows=t.querySelectorAll("tr:not(:first-child)");const q=v.trim();if(!q){rows.forEach(r=>{r.classList.remove("port-hit","port-dim")});return;}rows.forEach(r=>{const cell=r.cells[0];if(!cell)return;const txt=cell.textContent;const hit=txt.split(/[\s\/]+/).some(p=>p===q||p.startsWith(q));r.classList.toggle("port-hit",hit);r.classList.toggle("port-dim",!hit)});}
 
 render();
 </script>
