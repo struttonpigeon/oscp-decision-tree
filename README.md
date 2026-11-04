@@ -2,7 +2,9 @@
 
 An interactive, single-file decision tree for the OSCP exam. Click through decisions based on your current scenario (AD vs Standalone, OS, access level) to reach step-by-step methodology with copy-paste commands.
 
-The idea is you have a guide during your exam when you are fatigued and suffering
+The idea is you have a guide during your exam when you are fatigued and suffering.
+
+Ideally you also go and download my OSCP toolkit and windows exploit suggester. Hope it helps.
 
 ## Usage
 
@@ -10,7 +12,7 @@ The idea is you have a guide during your exam when you are fatigued and sufferin
 2. Open it in any browser
 3. Click through the decision tree based on your exam scenario
 
-No server, no dependencies, no internet required — works fully offline during the exam.
+No server, no dependencies, no internet required. This works fully offline during the exam.
 
 ## What's Inside
 
