@@ -16,8 +16,6 @@ No server, no dependencies, no internet required. This works fully offline durin
 
 ### Features
 
-- Dark-first theme with light mode support
-- Collapsible accordion sections (all start collapsed)
 - Copy buttons on every code block
 - Interactive port search filter (type a port number to filter the routing table)
 - Breadcrumb navigation with back button
