@@ -6,6 +6,10 @@ The idea is you have a guide during your exam when you are fatigued and sufferin
 
 Ideally you also go and download my OSCP toolkit and windows exploit suggester. Hope it helps.
 
+
+<img width="941" height="662" alt="image" src="https://github.com/user-attachments/assets/4715708f-359d-4888-8c0c-6e93e811882c" />
+
+
 ## Usage
 
 1. Download `index.html`
